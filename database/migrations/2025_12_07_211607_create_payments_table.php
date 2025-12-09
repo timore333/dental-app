@@ -23,6 +23,9 @@ return new class extends Migration
             // Receipt tracking
             $table->string('receipt_number')->unique();
             $table->text('notes')->nullable();
+             $table->foreignId('doctor_id')->nullable()->constrained('users')->cascadeOnDelete();
+
+            $table->index('doctor_id');
 
             // Audit fields
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();

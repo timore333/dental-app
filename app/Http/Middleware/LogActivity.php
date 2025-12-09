@@ -20,23 +20,27 @@ class LogActivity
         $wasAuthenticated = Auth::check();
         $previousUserId = $wasAuthenticated ? Auth::id() : null;
         $previousUserEmail = $wasAuthenticated ? Auth::user()->email : null;
+        $previousUserRole = $wasAuthenticated ? Auth::user()->role?->name : null;
 
         // Execute the request
         $response = $next($request);
 
         // Check if user just logged in
         if (!$wasAuthenticated && Auth::check()) {
+            $user = Auth::user();
+            // Load role if not loaded
+            if (!$user->role) {
+                $user->load('role');
+            }
+
             \Log::info('User login', [
-                'user_id' => Auth::id(),
-                'user_email' => Auth::user()->email,
-                'user_role' => Auth::user()->role,
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'user_role' => $user->role?->name,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'timestamp' => now(),
             ]);
-
-            // You can also log to audit log table here if you have one
-            // AuditLog::create([...])
         }
 
         // Check if user just logged out
@@ -44,6 +48,7 @@ class LogActivity
             \Log::info('User logout', [
                 'user_id' => $previousUserId,
                 'user_email' => $previousUserEmail,
+                'user_role' => $previousUserRole,
                 'ip_address' => $request->ip(),
                 'timestamp' => now(),
             ]);
@@ -74,6 +79,7 @@ class LogActivity
         $excludedRoutes = [
             'set-locale',
             'debug',
+            'sanctum/csrf-cookie',
         ];
 
         foreach ($excludedRoutes as $route) {

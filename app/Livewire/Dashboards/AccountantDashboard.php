@@ -2,97 +2,102 @@
 
 namespace App\Livewire\Dashboards;
 
-use Livewire\Component;
-use App\Models\Payment;
-use App\Models\PatientAccount;
 use App\Models\InsuranceRequest;
+use App\Models\PatientAccount;
+use App\Models\Payment;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class AccountantDashboard extends Component
 {
-    public $fromDate;
-    public $toDate;
-    public $dateRange = '30days';
+    public string $dateRange = '30days';
+    public ?\DateTime $fromDate = null;
+    public ?\DateTime $toDate = null;
 
-    public function mount()
+    public function mount(): void
     {
         $this->setDateRange('30days');
     }
 
-    public function setDateRange($range)
+    /**
+     * Set the date range for metrics
+     */
+    public function setDateRange(string $range): void
     {
         $this->dateRange = $range;
-
         $today = Carbon::now();
+
         match($range) {
             '7days' => [
-                $this->fromDate => $today->copy()->subDays(7)->startOfDay(),
-                $this->toDate => $today->endOfDay(),
+                $this->fromDate = $today->copy()->subDays(7)->startOfDay(),
+                $this->toDate = $today->endOfDay(),
             ],
             '30days' => [
-                $this->fromDate => $today->copy()->subDays(30)->startOfDay(),
-                $this->toDate => $today->endOfDay(),
+                $this->fromDate = $today->copy()->subDays(30)->startOfDay(),
+                $this->toDate = $today->endOfDay(),
             ],
             '90days' => [
-                $this->fromDate => $today->copy()->subDays(90)->startOfDay(),
-                $this->toDate => $today->endOfDay(),
+                $this->fromDate = $today->copy()->subDays(90)->startOfDay(),
+                $this->toDate = $today->endOfDay(),
             ],
             'yearly' => [
-                $this->fromDate => $today->copy()->startOfYear(),
-                $this->toDate => $today->endOfYear(),
+                $this->fromDate = $today->copy()->startOfYear(),
+                $this->toDate = $today->endOfYear(),
             ],
             default => [
-                $this->fromDate => $today->copy()->subDays(30)->startOfDay(),
-                $this->toDate => $today->endOfDay(),
-            ]
+                $this->fromDate = $today->copy()->subDays(30)->startOfDay(),
+                $this->toDate = $today->endOfDay(),
+            ],
         };
     }
 
-    public function getFinancialMetrics()
+    /**
+     * Get financial metrics
+     */
+    public function getFinancialMetrics(): array
     {
-        $completedPayments = Payment::where('status', 'completed')
+        // ✅ FIXED: Query payments directly (they represent actual completed payments)
+        $completedPayments = Payment::whereBetween('created_at', [$this->fromDate, $this->toDate]);
+
+        $cashPayments = Payment::where('payment_method', 'cash')
             ->whereBetween('created_at', [$this->fromDate, $this->toDate]);
 
-        $cashPayments = Payment::where('status', 'completed')
-            ->where('payment_method', 'cash')
-            ->whereBetween('created_at', [$this->fromDate, $this->toDate]);
-
-        $insurancePayments = Payment::where('status', 'completed')
-            ->where('payment_method', 'insurance')
+        $insurancePayments = Payment::where('payment_method', 'insurance')
             ->whereBetween('created_at', [$this->fromDate, $this->toDate]);
 
         return [
-            'total_revenue' => $completedPayments->sum('amount'),
-            'cash_received' => $cashPayments->sum('amount'),
-            'insurance_amount' => $insurancePayments->sum('amount'),
-            'outstanding_amount' => PatientAccount::sum('balance'),
+            'total_revenue' => $completedPayments->sum('amount') ?? 0,
+            'cash_received' => $cashPayments->sum('amount') ?? 0,
+            'insurance_amount' => $insurancePayments->sum('amount') ?? 0,
+            'outstanding_amount' => PatientAccount::sum('balance') ?? 0,
             'pending_insurance' => InsuranceRequest::where('status', 'pending')->count(),
-            'pending_insurance_amount' => InsuranceRequest::where('status', 'pending')->sum('estimated_cost'),
+            'pending_insurance_amount' => InsuranceRequest::where('status', 'pending')->sum('estimated_cost') ?? 0,
         ];
     }
 
-    public function getChartData()
+    /**
+     * Get chart data
+     */
+    public function getChartData(): array
     {
-        // Revenue by Source
-        $revenueBySource = \DB::table('payments')
-            ->where('status', 'completed')
+        // ✅ FIXED: Revenue by payment method (no status filter)
+        $revenueBySource = DB::table('payments')
             ->whereBetween('created_at', [$this->fromDate, $this->toDate])
             ->selectRaw('payment_method, SUM(amount) as total')
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
-        // Monthly Revenue Trend
-        $monthlyRevenue = \DB::table('payments')
-            ->where('status', 'completed')
+        // ✅ FIXED: Monthly revenue trend
+        $monthlyRevenue = DB::table('payments')
             ->whereBetween('created_at', [$this->fromDate, $this->toDate])
-            ->selectRaw('DATE_FORMAT(created_at, "%Y-%m-%d") as date, SUM(amount) as total')
+            ->selectRaw('DATE(created_at) as date, SUM(amount) as total')
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('total', 'date');
 
-        // Payment Method Breakdown
-        $paymentMethods = \DB::table('payments')
-            ->where('status', 'completed')
+        // ✅ FIXED: Payment method breakdown
+        $paymentMethods = DB::table('payments')
             ->whereBetween('created_at', [$this->fromDate, $this->toDate])
             ->selectRaw('payment_method, COUNT(*) as count, SUM(amount) as total')
             ->groupBy('payment_method')
@@ -115,9 +120,12 @@ class AccountantDashboard extends Component
         ];
     }
 
+    /**
+     * Get outstanding bills
+     */
     public function getOutstandingBills()
     {
-        return \DB::table('patient_accounts')
+        return DB::table('patient_accounts')
             ->join('patients', 'patient_accounts.patient_id', '=', 'patients.id')
             ->where('patient_accounts.balance', '>', 0)
             ->selectRaw('patients.name, patient_accounts.balance, patient_accounts.updated_at')
@@ -126,16 +134,20 @@ class AccountantDashboard extends Component
             ->get();
     }
 
+    /**
+     * Get recent payments
+     */
     public function getRecentPayments()
     {
-        return Payment::where('status', 'completed')
-            ->whereBetween('created_at', [$this->fromDate, $this->toDate])
-            ->with('appointment.patient')
-            ->latest()
+        return Payment::whereBetween('created_at', [$this->fromDate, $this->toDate])
+            ->orderByDesc('created_at')
             ->limit(10)
             ->get();
     }
 
+    /**
+     * Render the component
+     */
     public function render()
     {
         return view('livewire.dashboards.accountant-dashboard', [

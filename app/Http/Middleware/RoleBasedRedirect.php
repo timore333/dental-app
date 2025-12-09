@@ -18,19 +18,25 @@ class RoleBasedRedirect
         // Only apply redirect logic to /dashboard route
         if (auth()->check() && $request->path() === 'dashboard') {
             $user = auth()->user();
-            $role = $user->role;
+
+            // ✅ Load role relationship if not loaded
+            if (!$user->role) {
+                $user->load('role');
+            }
+
+            $roleName = $user->role?->name;
 
             \Log::debug('Dashboard redirect', [
                 'user_id' => $user->id,
                 'user_email' => $user->email,
-                'user_role' => $role,
+                'user_role' => $roleName,
             ]);
 
-            return match($role) {
-                'admin' => redirect()->route('admin.dashboard'),
-                'doctor' => redirect()->route('doctor.dashboard'),
-                'receptionist' => redirect()->route('receptionist.dashboard'),
-                'accountant' => redirect()->route('accountant.dashboard'),
+            return match($roleName) {
+                'Admin' => redirect()->route('admin.dashboard'),
+                'Doctor' => redirect()->route('doctor.dashboard'),
+                'Receptionist' => redirect()->route('receptionist.dashboard'),
+                'Accountant' => redirect()->route('accountant.dashboard'),
                 default => redirect()->route('profile.edit'),
             };
         }

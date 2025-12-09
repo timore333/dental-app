@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Builder;
 
 class User extends Authenticatable
 {
-     /** @use HasFactory<\Database\Factories\UserFactory> */
+    // ✅ REMOVED HasApiTokens - not needed for dental app
     use HasFactory, Notifiable;
 
     /**
@@ -24,6 +24,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
+        'is_active',
+        'locale',
+        'phone',
     ];
 
     /**
@@ -50,6 +53,10 @@ class User extends Authenticatable
         ];
     }
 
+    // ============================================================
+    // RELATIONSHIPS
+    // ============================================================
+
     /**
      * Get the role associated with the user.
      */
@@ -66,20 +73,35 @@ class User extends Authenticatable
         return $this->hasOne(TwoFactorSetting::class);
     }
 
+    // ============================================================
+    // ROLE CHECKING METHODS
+    // ============================================================
+
     /**
      * Check if user has a specific role by name or instance.
+     *
+     * @param string|Role $role Role name or Role instance
+     * @return bool
      */
     public function hasRole(string|Role $role): bool
     {
-        if (is_string($role)) {
-            return $this->role && $this->role->name === $role;
+        if (!$this->role) {
+            return false;
         }
 
-        return $this->role && $this->role->id === $role->id;
+        if (is_string($role)) {
+            // Case-insensitive comparison
+            return strtolower($this->role->name) === strtolower($role);
+        }
+
+        return $this->role->id === $role->id;
     }
 
     /**
      * Check if user has any of the given roles.
+     *
+     * @param string|Role ...$roles
+     * @return bool
      */
     public function hasAnyRole(...$roles): bool
     {
@@ -88,17 +110,24 @@ class User extends Authenticatable
                 return true;
             }
         }
-
         return false;
     }
 
     /**
      * Check if user has a specific permission.
+     *
+     * @param string|Permission $permission
+     * @return bool
      */
     public function hasPermission(string|Permission $permission): bool
     {
         if (!$this->role) {
             return false;
+        }
+
+        // Admin has all permissions
+        if ($this->isAdmin()) {
+            return true;
         }
 
         if (is_string($permission)) {
@@ -109,11 +138,12 @@ class User extends Authenticatable
             return false;
         }
 
-        return $this->role->permissions->contains($permission);
+        return $this->role->permissions()->where('permissions.id', $permission->id)->exists();
     }
 
-
-
+    // ============================================================
+    // ROLE TYPE CHECK METHODS
+    // ============================================================
 
     /**
      * Check if user is an admin.
@@ -122,25 +152,17 @@ class User extends Authenticatable
     {
         return $this->hasRole('Admin');
     }
-  // Scope to filter only admin users
-    public function scopeAdmin(Builder $query): Builder
-    {
-        return $query->whereHas('role', function (Builder $roleQuery) {
-            $roleQuery->where('name', 'Admin');
-        });
-    }
-
 
     /**
-     * Check if user is a doctor
+     * Check if user is a doctor.
      */
     public function isDoctor(): bool
     {
-       return $this->hasRole('Doctor');
+        return $this->hasRole('Doctor');
     }
 
     /**
-     * Check if user is a receptionist
+     * Check if user is a receptionist.
      */
     public function isReceptionist(): bool
     {
@@ -148,23 +170,88 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is an accountant
+     * Check if user is an accountant.
      */
     public function isAccountant(): bool
     {
         return $this->hasRole('Accountant');
     }
 
+    /**
+     * Get role name as string (for middleware compatibility).
+     *
+     * @return string|null
+     */
+    public function getRoleNameAttribute(): ?string
+    {
+        return $this->role?->name;
+    }
 
     /**
-     * Get the user's display name
+     * Check if user is active.
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active === true;
+    }
+
+    /**
+     * Get the user's display name.
      */
     public function getDisplayNameAttribute(): string
     {
         return $this->name ?? $this->email;
     }
 
+    // ============================================================
+    // SCOPES
+    // ============================================================
 
+    /**
+     * Scope to filter only admin users.
+     */
+    public function scopeAdmin(Builder $query): Builder
+    {
+        return $query->whereHas('role', function (Builder $roleQuery) {
+            $roleQuery->where('name', 'Admin');
+        });
+    }
 
+    /**
+     * Scope to filter only doctor users.
+     */
+    public function scopeDoctor(Builder $query): Builder
+    {
+        return $query->whereHas('role', function (Builder $roleQuery) {
+            $roleQuery->where('name', 'Doctor');
+        });
+    }
 
+    /**
+     * Scope to filter only receptionist users.
+     */
+    public function scopeReceptionist(Builder $query): Builder
+    {
+        return $query->whereHas('role', function (Builder $roleQuery) {
+            $roleQuery->where('name', 'Receptionist');
+        });
+    }
+
+    /**
+     * Scope to filter only accountant users.
+     */
+    public function scopeAccountant(Builder $query): Builder
+    {
+        return $query->whereHas('role', function (Builder $roleQuery) {
+            $roleQuery->where('name', 'Accountant');
+        });
+    }
+
+    /**
+     * Scope to filter only active users.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
 }

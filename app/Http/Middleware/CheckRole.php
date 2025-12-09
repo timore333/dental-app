@@ -22,12 +22,18 @@ class CheckRole
 
         $user = $request->user();
 
-        // Check if user has any of the required roles
-        $userRoles = is_array($user->role) ? $user->role : [$user->role];
+        // Make sure role relationship is loaded
+        if (!$user->role) {
+            \Log::error('User role not loaded', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+            ]);
+            abort(403, 'User role configuration error. Contact administrator.');
+        }
 
-        // Check if user has at least one of the required roles
+        // Check if user has any of the required roles
         foreach ($roles as $role) {
-            if (in_array($role, $userRoles) || $user->role === $role) {
+            if ($user->hasRole($role)) {
                 return $next($request);
             }
         }
@@ -36,9 +42,10 @@ class CheckRole
         \Log::warning('Unauthorized role access attempt', [
             'user_id' => $user->id,
             'user_email' => $user->email,
-            'user_role' => $user->role,
+            'user_role' => $user->role?->name,
             'required_roles' => $roles,
             'path' => $request->path(),
+            'timestamp' => now(),
         ]);
 
         abort(403, 'Unauthorized. You do not have the required role.');

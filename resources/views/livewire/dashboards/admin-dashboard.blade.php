@@ -140,7 +140,7 @@
 
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <a href="{{ route('users.index') }}" class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow hover:shadow-lg transition text-center">
+            <a href="{{ route('admin.users.index') }}" class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow hover:shadow-lg transition text-center">
                 <div class="text-2xl mb-2">👥</div>
                 <div class="font-semibold text-slate-900 dark:text-white">{{ __('Manage Users') }}</div>
             </a>
@@ -152,7 +152,7 @@
                 <div class="text-2xl mb-2">⚙️</div>
                 <div class="font-semibold text-slate-900 dark:text-white">{{ __('System Settings') }}</div>
             </a>
-            <a href="{{ route('audit-logs.index') }}" class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow hover:shadow-lg transition text-center">
+            <a href="{{ route('admin.audit-logs.index') }}" class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow hover:shadow-lg transition text-center">
                 <div class="text-2xl mb-2">📝</div>
                 <div class="font-semibold text-slate-900 dark:text-white">{{ __('Audit Logs') }}</div>
             </a>

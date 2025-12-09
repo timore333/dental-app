@@ -1,147 +1,255 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{{ __('Doctor Dashboard') }}</h1>
-                <p class="text-slate-600 dark:text-slate-400 mt-1">{{ __('Your Schedule & Performance') }}</p>
-            </div>
-            <button
-                wire:click="toggleTodayFilter"
-                class="px-4 py-2 rounded-lg font-medium transition {{ $todayOnly ? 'bg-teal-500 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100' }}"
-            >
-                {{ __('Today Only') }}
-            </button>
-        </div>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <!-- Header with Date Range Selection -->
+    <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-white">{{ __('Doctor Dashboard') }}</h1>
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ __('Welcome back, ' . auth()->user()->name) }}</p>
+                </div>
 
-        <!-- Metric Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <x-metric-card
-                label="{{ __('Today\'s Appointments') }}"
-                :value="$metrics['today_appointments']"
-                icon="calendar"
-                color="bg-blue-500"
-            />
-            <x-metric-card
-                label="{{ __('Completed Visits') }}"
-                :value="$metrics['completed_visits']"
-                icon="check-circle"
-                color="bg-green-500"
-            />
-            <x-metric-card
-                label="{{ __('Pending') }}"
-                :value="$metrics['pending_appointments']"
-                icon="clock"
-                color="bg-yellow-500"
-            />
-            <x-metric-card
-                label="{{ __('Earnings') }}"
-                :value="'$' . number_format($metrics['total_earnings'], 2)"
-                icon="trending-up"
-                color="bg-purple-500"
-            />
-        </div>
-
-        <!-- Today's Appointments -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">{{ __('Today\'s Appointments') }}</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="border-b dark:border-slate-700">
-                        <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">{{ __('Time') }}</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">{{ __('Patient') }}</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">{{ __('Type') }}</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">{{ __('Status') }}</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">{{ __('Actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($appointments as $appointment)
-                        <tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700">
-                            <td class="px-4 py-3 font-semibold text-slate-900 dark:text-white">{{ $appointment->appointment_date->format('H:i') }}</td>
-                            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ $appointment->patient->name }}</td>
-                            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ $appointment->appointment_type->name ?? 'General' }}</td>
-                            <td class="px-4 py-3">
-                                <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                    @if($appointment->status === 'completed') bg-green-100 text-green-700
-                                    @elseif($appointment->status === 'scheduled') bg-blue-100 text-blue-700
-                                    @else bg-yellow-100 text-yellow-700
-                                    @endif
-                                ">
-                                    {{ ucfirst($appointment->status) }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex gap-2">
-                                    @if($appointment->status !== 'completed')
-                                    <button
-                                        wire:click="recordVisit({{ $appointment->id }})"
-                                        class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs font-medium transition"
-                                    >
-                                        {{ __('Record Visit') }}
-                                    </button>
-                                    <button
-                                        wire:click="completeAppointment({{ $appointment->id }})"
-                                        class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-xs font-medium transition"
-                                    >
-                                        {{ __('Complete') }}
-                                    </button>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                                {{ __('No appointments scheduled') }}
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Recent Visits -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">{{ __('Recent Visits') }}</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="border-b dark:border-slate-700">
-                        <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">{{ __('Patient') }}</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">{{ __('Procedures') }}</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">{{ __('Date') }}</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">{{ __('Notes') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($visits as $visit)
-                        <tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700">
-                            <td class="px-4 py-3 font-semibold text-slate-900 dark:text-white">{{ $visit->patient->name }}</td>
-                            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">
-                                @foreach($visit->procedures as $procedure)
-                                    <span class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded text-xs mr-1 mb-1">
-                                        {{ $procedure->name }}
-                                    </span>
-                                @endforeach
-                            </td>
-                            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ $visit->created_at->format('M d, Y') }}</td>
-                            <td class="px-4 py-3 text-slate-700 dark:text-slate-300 text-xs">
-                                {{ Str::limit($visit->notes, 50) }}
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="4" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                                {{ __('No visits recorded') }}
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                <!-- Date Range Selector -->
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        wire:click="setDateRange('7days')"
+                        :class="{ 'bg-teal-500 text-white': dateRange === '7days', 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300': dateRange !== '7days' }"
+                        class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 transition-colors">
+                        {{ __('7 Days') }}
+                    </button>
+                    <button
+                        wire:click="setDateRange('30days')"
+                        :class="{ 'bg-teal-500 text-white': dateRange === '30days', 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300': dateRange !== '30days' }"
+                        class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 transition-colors">
+                        {{ __('30 Days') }}
+                    </button>
+                    <button
+                        wire:click="setDateRange('90days')"
+                        :class="{ 'bg-teal-500 text-white': dateRange === '90days', 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300': dateRange !== '90days' }"
+                        class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 transition-colors">
+                        {{ __('90 Days') }}
+                    </button>
+                    <button
+                        wire:click="setDateRange('yearly')"
+                        :class="{ 'bg-teal-500 text-white': dateRange === 'yearly', 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300': dateRange !== 'yearly' }"
+                        class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 transition-colors">
+                        {{ __('Yearly') }}
+                    </button>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Key Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <!-- Total Appointments -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-400">{{ __('Total Appointments') }}</p>
+                        <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{{ $metrics['total_appointments'] }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Appointments -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-400">{{ __('Completed') }}</p>
+                        <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{{ $metrics['completed_appointments'] }}</p>
+                    </div>
+                    <div class="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                        <svg class="w-6 h-6 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Visits -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-l-4 border-purple-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-400">{{ __('Total Visits') }}</p>
+                        <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{{ $metrics['total_visits'] }}</p>
+                    </div>
+                    <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Earnings -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-l-4 border-yellow-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-400">{{ __('Total Earnings') }}</p>
+                        <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{{ number_format($metrics['total_earnings'], 2) }} {{ __('EGP') }}</p>
+                    </div>
+                    <div class="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+                        <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Appointments -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-l-4 border-red-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-400">{{ __('Pending') }}</p>
+                        <p class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{{ $metrics['pending_appointments'] }}</p>
+                    </div>
+                    <div class="p-3 bg-red-100 dark:bg-red-900 rounded-full">
+                        <svg class="w-6 h-6 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Appointment Status Chart -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">{{ __('Appointment Status') }}</h2>
+                <canvas id="appointmentStatusChart"></canvas>
+            </div>
+
+            <!-- Earnings by Payment Method -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">{{ __('Earnings by Method') }}</h2>
+                <canvas id="earningsMethodChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Bottom Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Top Procedures -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">{{ __('Top Procedures') }}</h2>
+                <canvas id="proceduresChart"></canvas>
+            </div>
+
+            <!-- Appointments Over Time -->
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">{{ __('Appointments Trend') }}</h2>
+                <canvas id="appointmentsTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Appointment Status Chart
+        const appointmentStatusCtx = document.getElementById('appointmentStatusChart');
+        if (appointmentStatusCtx) {
+            new Chart(appointmentStatusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: @json(array_keys($chartData['appointmentStatus']['labels'] ?? [])),
+                    datasets: [{
+                        data: @json($chartData['appointmentStatus']['data'] ?? []),
+                        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // Earnings by Method Chart
+        const earningsCtx = document.getElementById('earningsMethodChart');
+        if (earningsCtx) {
+            new Chart(earningsCtx, {
+                type: 'bar',
+                data: {
+                    labels: @json(array_keys($chartData['earningsByMethod']['labels'] ?? [])),
+                    datasets: [{
+                        label: '{{ __("Amount (EGP)") }}',
+                        data: @json($chartData['earningsByMethod']['data'] ?? []),
+                        backgroundColor: '#10B981',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Procedures Chart
+        const proceduresCtx = document.getElementById('proceduresChart');
+        if (proceduresCtx) {
+            new Chart(proceduresCtx, {
+                type: 'horizontalBar',
+                data: {
+                    labels: @json(array_keys($chartData['procedures']['labels'] ?? [])),
+                    datasets: [{
+                        label: '{{ __("Count") }}',
+                        data: @json($chartData['procedures']['data'] ?? []),
+                        backgroundColor: '#8B5CF6'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Appointments Trend Chart
+        const trendCtx = document.getElementById('appointmentsTrendChart');
+        if (trendCtx) {
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: @json(array_keys($chartData['appointmentsOverTime']['labels'] ?? [])),
+                    datasets: [{
+                        label: '{{ __("Appointments") }}',
+                        data: @json($chartData['appointmentsOverTime']['data'] ?? []),
+                        borderColor: '#06B6D4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+    </script>
+    @endpush
 </div>

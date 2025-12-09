@@ -1,184 +1,188 @@
-<!-- Sidebar Component - FULLY CORRECTED -->
-<aside class="hidden md:flex flex-col w-64 bg-white dark:bg-slate-800 shadow h-screen sticky top-0">
-    <!-- Logo Section -->
-    <div class="px-6 py-4 border-b dark:border-slate-700">
-        <a href="{{ route('dashboard') }}" class="text-2xl font-bold text-primary flex items-center space-x-2">
-            <span>🦷</span>
-            <span class="text-xl">{{ config('app.name') }}</span>
-        </a>
+<aside class="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-slate-900 to-slate-800 text-white shadow-lg overflow-y-auto">
+
+    <!-- Logo -->
+    <div class="p-6 border-b border-slate-700">
+        <h1 class="text-2xl font-bold text-teal-400">Dental Clinic</h1>
     </div>
 
     <!-- Navigation Menu -->
-    <nav class="flex-1 overflow-auto bg-white dark:bg-slate-800 px-4 py-6">
-        @php
-            $navConfig = config('navigation');
-            // ✅ FIXED: Get the role NAME, not the Role object
-            $userRole = auth()->user()->role?->name ?? 'user';
-            $menuItems = $navConfig[$userRole] ?? $navConfig['admin'] ?? [];
-        @endphp
+    <nav class="mt-6">
 
-        @forelse($menuItems as $item)
-            <!-- Main Menu Item -->
-            <a href="{{ $item['route'] }}"
-               class="flex items-center px-4 py-3 mb-2 text-sm font-medium rounded-lg transition
-                {{ (isset($item['active']) && request()->routeIs($item['active']))
-                    ? 'bg-primary text-white shadow-md'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700' }}">
+        <!-- Dashboard -->
+        <a href="{{ route('dashboard') }}"
+           class="flex items-center px-6 py-3 text-gray-300 hover:bg-slate-700 hover:text-white transition @if(request()->routeIs('dashboard')) bg-slate-700 text-white @endif">
+            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 7a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zm8-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6a1 1 0 011-1z"></path>
+            </svg>
+            <span>Dashboard</span>
+        </a>
 
-                @if(isset($item['icon']))
-                    <span class="mr-3 text-lg">{{ $item['icon'] }}</span>
-                @endif
+        <!-- Patients Section -->
+        <div class="mt-4">
+            <button class="w-full flex items-center px-6 py-2 text-gray-300 hover:bg-slate-700 hover:text-white transition"
+                    onclick="toggleMenu('patients-menu')">
+                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Patients</span>
+                <svg class="w-4 h-4 ml-auto" id="patients-arrow" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+            </button>
 
-                <span class="flex-1">{{ $item['label'] }}</span>
-
-                @if(isset($item['active']) && request()->routeIs($item['active']))
-                    <span class="ml-auto text-lg">→</span>
-                @endif
-
-                @if(isset($item['sub']) && count($item['sub']) > 0)
-                    <span class="ml-1">▾</span>
-                @endif
-            </a>
-
-            <!-- Submenu Items (if exists) -->
-            @if(isset($item['sub']) && count($item['sub']) > 0)
-                <div class="ml-4 space-y-1 mb-2 bg-gray-50 dark:bg-slate-900 rounded-lg p-2">
-                    @foreach($item['sub'] as $subItem)
-                        <a href="{{ $subItem['route'] }}"
-                           class="flex items-center px-3 py-2 text-xs font-medium rounded transition
-                            {{ request()->routeIs($subItem['route'])
-                                ? 'bg-primary text-white'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700' }}">
-                            {{ $subItem['label'] }}
-                        </a>
-                    @endforeach
-                </div>
-            @endif
-        @empty
-            <div class="text-center py-4 text-gray-500 dark:text-gray-400">
-                <p class="text-sm">{{ __('No menu items available') }}</p>
-            </div>
-        @endforelse
-    </nav>
-
-    <!-- User Info Section -->
-    <div class="px-6 py-4 border-t dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
-                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {{ auth()->user()->name ?? 'User' }}
-                </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {{ strtoupper($userRole ?? 'user') }}
-                </p>
+            <!-- Patients Submenu -->
+            <div id="patients-menu" class="hidden bg-slate-700">
+                <a href="{{ route('patients.index') }}"
+                   class="block px-12 py-2 text-gray-300 hover:text-white hover:bg-slate-600 transition @if(request()->routeIs('patients.index')) bg-slate-600 text-white @endif">
+                    All Patients
+                </a>
+                <a href="{{ route('patients.create') }}"
+                   class="block px-12 py-2 text-gray-300 hover:text-white hover:bg-slate-600 transition @if(request()->routeIs('patients.create')) bg-slate-600 text-white @endif">
+                    New Patient
+                </a>
             </div>
         </div>
-    </div>
 
-    <!-- Logout Button -->
-    <div class="px-6 py-4 border-t dark:border-slate-700">
+        <!-- Appointments Section -->
+        <div class="mt-2">
+            <button class="w-full flex items-center px-6 py-2 text-gray-300 hover:bg-slate-700 hover:text-white transition"
+                    onclick="toggleMenu('appointments-menu')">
+                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v2h16V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5H4v8a2 2 0 002 2h12a2 2 0 002-2V7h-2v1a1 1 0 11-2 0V7H9v1a1 1 0 11-2 0V7H6v1a1 1 0 11-2 0V7z"></path>
+                </svg>
+                <span>Appointments</span>
+                <svg class="w-4 h-4 ml-auto" id="appointments-arrow" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+            </button>
+
+            <!-- Appointments Submenu -->
+            <div id="appointments-menu" class="hidden bg-slate-700">
+                <a href="{{ route('appointments.index') }}"
+                   class="block px-12 py-2 text-gray-300 hover:text-white hover:bg-slate-600 transition @if(request()->routeIs('appointments.index')) bg-slate-600 text-white @endif">
+                    All Appointments
+                </a>
+                <a href="{{ route('appointments.create') }}"
+                   class="block px-12 py-2 text-gray-300 hover:text-white hover:bg-slate-600 transition @if(request()->routeIs('appointments.create')) bg-slate-600 text-white @endif">
+                    New Appointment
+                </a>
+            </div>
+        </div>
+
+        <!-- Insurance Section -->
+        <div class="mt-2">
+            <button class="w-full flex items-center px-6 py-2 text-gray-300 hover:bg-slate-700 hover:text-white transition"
+                    onclick="toggleMenu('insurance-menu')">
+                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a1 1 0 001 1h14a1 1 0 001-1V6a2 2 0 00-2-2H4zm0 12a2 2 0 00-2 2v.5a.5.5 0 00.5.5h15a.5.5 0 00.5-.5V18a2 2 0 00-2-2H4z"></path>
+                </svg>
+                <span>Insurance</span>
+                <svg class="w-4 h-4 ml-auto" id="insurance-arrow" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+            </button>
+
+            <!-- Insurance Submenu -->
+            <div id="insurance-menu" class="hidden bg-slate-700">
+                <a href="{{ route('insurance.index') }}"
+                   class="block px-12 py-2 text-gray-300 hover:text-white hover:bg-slate-600 transition @if(request()->routeIs('insurance.index')) bg-slate-600 text-white @endif">
+                    Insurance Requests
+                </a>
+                <a href="{{ route('insurance.companies.index') }}"
+                   class="block px-12 py-2 text-gray-300 hover:text-white hover:bg-slate-600 transition @if(request()->routeIs('insurance.companies.index')) bg-slate-600 text-white @endif">
+                    Companies
+                </a>
+            </div>
+        </div>
+
+        <!-- Procedures -->
+        <a href="{{ route('procedures.index') }}"
+           class="flex items-center px-6 py-3 mt-2 text-gray-300 hover:bg-slate-700 hover:text-white transition @if(request()->routeIs('procedures.index')) bg-slate-700 text-white @endif">
+            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z"></path>
+            </svg>
+            <span>Procedures</span>
+        </a>
+
+        <!-- Payments -->
+        <a href="{{ route('payments.index') }}"
+           class="flex items-center px-6 py-3 text-gray-300 hover:bg-slate-700 hover:text-white transition @if(request()->routeIs('payments.index')) bg-slate-700 text-white @endif">
+            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v4a1 1 0 001 1h14a1 1 0 001-1V6a2 2 0 00-2-2H4zm0 12a2 2 0 00-2 2v.5a.5.5 0 00.5.5h15a.5.5 0 00.5-.5V18a2 2 0 00-2-2H4z"></path>
+            </svg>
+            <span>Payments</span>
+        </a>
+
+        <!-- Reports -->
+        <a href="{{ route('reports.index') }}"
+           class="flex items-center px-6 py-3 text-gray-300 hover:bg-slate-700 hover:text-white transition @if(request()->routeIs('reports.index')) bg-slate-700 text-white @endif">
+            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+            </svg>
+            <span>Reports</span>
+        </a>
+
+        <!-- Settings -->
+        <a href="{{ route('settings.index') }}"
+           class="flex items-center px-6 py-3 text-gray-300 hover:bg-slate-700 hover:text-white transition @if(request()->routeIs('settings.index')) bg-slate-700 text-white @endif">
+            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+            </svg>
+            <span>Settings</span>
+        </a>
+
+    </nav>
+
+    <!-- User Section -->
+    <div class="absolute bottom-0 w-full border-t border-slate-700 bg-slate-800 p-4">
+        <div class="flex items-center mb-4">
+            <div class="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold">
+                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+            </div>
+            <div class="ml-3">
+                <p class="text-sm font-semibold">{{ auth()->user()->name }}</p>
+                <p class="text-xs text-gray-400">{{ auth()->user()->role?->name ?? 'User' }}</p>
+            </div>
+        </div>
+
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 rounded-lg transition">
-                {{ __('Logout') }}
+            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                Logout
             </button>
         </form>
     </div>
+
 </aside>
 
-<!-- Mobile Sidebar (Collapsed) -->
-<aside class="md:hidden fixed left-0 top-16 h-screen w-64 bg-white dark:bg-slate-800 shadow transform -translate-x-full transition-transform duration-200 z-30" id="mobile-sidebar">
-
-    <!-- Navigation Menu (Mobile) -->
-    <nav class="flex-1 overflow-auto px-4 py-6 h-[calc(100vh-200px)]">
-        @php
-            $userRole = auth()->user()->role?->name ?? 'user';
-            $menuItems = $navConfig[$userRole] ?? $navConfig['admin'] ?? [];
-        @endphp
-
-        @forelse($menuItems as $item)
-            <!-- Main Menu Item -->
-            <a href="{{ $item['route'] }}"
-               class="flex items-center px-4 py-3 mb-2 text-sm font-medium rounded-lg transition
-                {{ (isset($item['active']) && request()->routeIs($item['active']))
-                    ? 'bg-primary text-white'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700' }}"
-               onclick="document.getElementById('mobile-sidebar').classList.add('-translate-x-full')">
-
-                @if(isset($item['icon']))
-                    <span class="mr-3 text-lg">{{ $item['icon'] }}</span>
-                @endif
-
-                <span class="flex-1">{{ $item['label'] }}</span>
-
-                @if(isset($item['sub']) && count($item['sub']) > 0)
-                    <span class="ml-1">▾</span>
-                @endif
-            </a>
-
-            <!-- Submenu Items (if exists) -->
-            @if(isset($item['sub']) && count($item['sub']) > 0)
-                <div class="ml-4 space-y-1 mb-2 bg-gray-50 dark:bg-slate-900 rounded-lg p-2">
-                    @foreach($item['sub'] as $subItem)
-                        <a href="{{ $subItem['route'] }}"
-                           class="flex items-center px-3 py-2 text-xs font-medium rounded transition
-                            {{ request()->routeIs($subItem['route'])
-                                ? 'bg-primary text-white'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700' }}"
-                           onclick="document.getElementById('mobile-sidebar').classList.add('-translate-x-full')">
-                            {{ $subItem['label'] }}
-                        </a>
-                    @endforeach
-                </div>
-            @endif
-        @empty
-            <div class="text-center py-4 text-gray-500 dark:text-gray-400">
-                <p class="text-sm">{{ __('No menu items available') }}</p>
-            </div>
-        @endforelse
-    </nav>
-
-    <!-- User Info & Logout (Mobile) -->
-    <div class="px-6 py-4 border-t dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
-        <div class="flex items-center space-x-3 mb-4">
-            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
-                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {{ auth()->user()->name ?? 'User' }}
-                </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {{ strtoupper($userRole ?? 'user') }}
-                </p>
-            </div>
-        </div>
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition">
-                {{ __('Logout') }}
-            </button>
-        </form>
-    </div>
-</aside>
-
-<!-- Mobile Menu Toggle Script -->
 <script>
-    // Open mobile sidebar
-    document.getElementById('mobile-menu-toggle')?.addEventListener('click', function() {
-        const sidebar = document.getElementById('mobile-sidebar');
-        sidebar?.classList.toggle('-translate-x-full');
-    });
+    function toggleMenu(menuId) {
+        const menu = document.getElementById(menuId);
+        const arrow = document.getElementById(menuId.replace('-menu', '-arrow'));
 
-    // Close mobile sidebar when clicking outside
-    document.addEventListener('click', function(e) {
-        const sidebar = document.getElementById('mobile-sidebar');
-        const toggle = document.getElementById('mobile-menu-toggle');
-        if (sidebar && toggle && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
-            sidebar.classList.add('-translate-x-full');
+        menu.classList.toggle('hidden');
+
+        if (arrow) {
+            arrow.style.transform = menu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+    }
+
+    // Auto-open menus if current route is in that section
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentRoute = '{{ request()->route()->getName() }}';
+
+        if (currentRoute.startsWith('patients.')) {
+            document.getElementById('patients-menu').classList.remove('hidden');
+            document.getElementById('patients-arrow').style.transform = 'rotate(180deg)';
+        }
+        if (currentRoute.startsWith('appointments.')) {
+            document.getElementById('appointments-menu').classList.remove('hidden');
+            document.getElementById('appointments-arrow').style.transform = 'rotate(180deg)';
+        }
+        if (currentRoute.startsWith('insurance.')) {
+            document.getElementById('insurance-menu').classList.remove('hidden');
+            document.getElementById('insurance-arrow').style.transform = 'rotate(180deg)';
         }
     });
 </script>
