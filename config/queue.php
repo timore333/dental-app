@@ -7,9 +7,9 @@ return [
     | Default Queue Connection Name
     |--------------------------------------------------------------------------
     |
-    | Laravel's queue supports a variety of backends via a single, unified
-    | API, giving you convenient access to each backend using identical
-    | syntax for each. The default queue connection is defined below.
+    | Laravel's queue API supports an assortment of back-ends via a single
+    | API, giving you convenient access to each back-end using the same
+    | syntax for every one. Here you may define a default connection.
     |
     */
 
@@ -20,12 +20,12 @@ return [
     | Queue Connections
     |--------------------------------------------------------------------------
     |
-    | Here you may configure the connection options for every queue backend
-    | used by your application. An example configuration is provided for
-    | each backend supported by Laravel. You're also free to add more.
+    | Here you may configure the connection information for each server that
+    | is used by your application. An "driver" key is specified for each
+    | connection and also several other properties for the connections.
     |
-    | Drivers: "sync", "database", "beanstalkd", "sqs", "redis",
-    |          "deferred", "background", "failover", "null"
+    | Supported drivers: "sync", "database", "beanstalkd", "sqs", "redis",
+    | "null"
     |
     */
 
@@ -97,13 +97,13 @@ return [
     |--------------------------------------------------------------------------
     |
     | The following options configure the database and table that store job
-    | batching information. These options can be updated to any database
-    | connection and table which has been defined by your application.
+    | batching information for your application. These options may be changed
+    | as needed, but typically these defaults are fine.
     |
     */
 
     'batching' => [
-        'database' => env('DB_CONNECTION', 'sqlite'),
+        'database' => env('DB_CONNECTION', 'mysql'),
         'table' => 'job_batches',
     ],
 
@@ -113,17 +113,57 @@ return [
     |--------------------------------------------------------------------------
     |
     | These options configure the behavior of failed queue job logging so you
-    | can control how and where failed jobs are stored. Laravel ships with
-    | support for storing failed jobs in a simple file or in a database.
+    | can control which database and table are used to store the jobs that
+    | have failed. You may change these settings as needed for your app.
     |
-    | Supported drivers: "database-uuids", "dynamodb", "file", "null"
+    | Supported drivers: "database", "database-uuids", "dynamodb", "file", "null"
     |
     */
 
     'failed' => [
         'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'sqlite'),
-        'table' => 'failed_jobs',
+        'database' => env('DB_CONNECTION', 'mysql'),
+        'table' => env('QUEUE_FAILED_TABLE', 'failed_jobs'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Job Timeout
+    |--------------------------------------------------------------------------
+    |
+    | The default time limit for each job is 90 seconds. However, you may want
+    | to set higher or lower timeout per job. The specific timeout can be set
+    | for each job as well.
+    |
+    */
+
+    'timeout' => env('QUEUE_TIMEOUT', 90),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Queue Settings for SMS & Email Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Custom settings optimized for notification processing
+    | Email: 60s timeout, 3 retries, 5s between retries
+    | SMS: 30s timeout, 3 retries, 10s between retries (due to API rate limits)
+    |
+    */
+
+    'notifications' => [
+        'driver' => 'database',
+        'queue' => 'notifications',
+        'timeout' => 60,
+        'tries' => 3,
+        'retry_after' => 5,
+    ],
+
+    'sms' => [
+        'driver' => 'database',
+        'queue' => 'sms',
+        'timeout' => 30,
+        'tries' => 3,
+        'retry_after' => 10,
     ],
 
 ];

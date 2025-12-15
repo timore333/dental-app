@@ -29,7 +29,7 @@ class StoreUserRequest extends FormRequest
                 'required',
                 'min:8',
                 'confirmed',
-                'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/',
+//                'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/',
             ],
             'role_id' => ['required', 'exists:roles,id'],
         ];
@@ -41,7 +41,7 @@ class StoreUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'password.regex' => 'Password must contain at least one uppercase letter, one number, and one special character.',
+//            'password.regex' => 'Password must contain at least one uppercase letter, one number, and one special character.',
         ];
     }
 }

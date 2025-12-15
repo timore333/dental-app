@@ -26,6 +26,7 @@ class User extends Authenticatable
         'role_id',
         'is_active',
         'locale',
+        'theme',
         'phone',
     ];
 

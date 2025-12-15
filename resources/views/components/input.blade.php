@@ -1,43 +1,31 @@
-@props([
-    'label' => '',
-    'error' => '',
-    'icon' => '',
-    'type' => 'text',
-])
+@props(['type' => 'text', 'label' => null, 'error' => null, 'hint' => null])
 
-<div class="mb-4">
-    @if($label)
-        <label {{ $attributes->only('for')->merge(['class' => 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2']) }}>
+<div class="form-group">
+    @if ($label)
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {{ $label }}
+            @if ($attributes->has('required'))
+                <span class="text-red-500">*</span>
+            @endif
         </label>
     @endif
 
-    <div class="relative">
-        @if($icon)
-            <div class="absolute inset-y-0 {{ session('locale') === 'ar' ? 'right' : 'left' }}-0 pl-3 pr-3 flex items-center pointer-events-none">
-                <span class="text-gray-500 dark:text-gray-400">{{ $icon }}</span>
-            </div>
-        @endif
+    <input type="{{ $type }}"
+           {{ $attributes->merge(['class' => 'w-full px-3 py-2 border rounded-lg
+                  bg-white dark:bg-gray-800
+                  border-gray-300 dark:border-gray-600
+                  text-gray-900 dark:text-white
+                  placeholder-gray-500 dark:placeholder-gray-400
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
+                  focus:border-transparent
+                  transition-colors duration-200
+                  ' . ($error ? 'border-red-500 dark:border-red-500' : '')]) }} />
 
-        <input
-            type="{{ $type }}"
-            {{ $attributes->merge([
-                'class' => 'w-full px-4 py-2 border rounded-lg ' .
-                    'bg-white dark:bg-slate-800 ' .
-                    'text-gray-900 dark:text-white ' .
-                    'border-gray-300 dark:border-slate-600 ' .
-                    'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ' .
-                    'placeholder-gray-400 dark:placeholder-gray-500 ' .
-                    ($error ? 'border-red-500 focus:ring-red-500' : ''),
-                'aria-invalid' => $error ? 'true' : 'false',
-                'aria-describedby' => $error ? $attributes->get('id') . '-error' : null,
-            ]) }}
-        />
-    </div>
+    @if ($error)
+        <p class="mt-1 text-sm text-red-500 dark:text-red-400">{{ $error }}</p>
+    @endif
 
-    @if($error)
-        <p id="{{ $attributes->get('id') }}-error" class="mt-1 text-sm text-red-600 dark:text-red-400">
-            {{ $error }}
-        </p>
+    @if ($hint)
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $hint }}</p>
     @endif
 </div>

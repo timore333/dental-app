@@ -18,6 +18,7 @@ class AdminDashboard extends Component
 
     public function mount(): void
     {
+
         $this->setDateRange('30days');
     }
 
@@ -32,10 +33,6 @@ class AdminDashboard extends Component
         match($range) {
             '7days' => [
                 $this->fromDate = $today->copy()->subDays(7)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-            '30days' => [
-                $this->fromDate = $today->copy()->subDays(30)->startOfDay(),
                 $this->toDate = $today->endOfDay(),
             ],
             '90days' => [

@@ -1,10 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 // ============================================================
 // PUBLIC ROUTES (Accessible without authentication)
 // ============================================================
+
+Route::get('/test', function () {
+    return view('welcome');
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('login');
@@ -25,8 +31,18 @@ Route::get('/set-locale/{locale}', function ($locale) {
     if (!in_array($locale, ['en', 'ar'])) {
         $locale = 'en';
     }
+
+    // Update user preference if authenticated
+    if (auth()->check()) {
+        auth()->user()->update(['locale' => $locale]);
+    }
+
+    // Update session
     session(['locale' => $locale]);
+
+    // Set app locale
     app()->setLocale($locale);
+
     return redirect()->back();
 })->name('set-locale');
 
@@ -54,7 +70,7 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
             'user_email' => $user->email,
         ]);
 
-        return match($roleName) {
+        return match ($roleName) {
             'Admin' => redirect()->route('admin.dashboard'),
             'Doctor' => redirect()->route('doctor.dashboard'),
             'Receptionist' => redirect()->route('receptionist.dashboard'),
@@ -96,6 +112,7 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
         Route::get('/patient', \App\Livewire\Reports\PatientReport::class)->name('patient');
         Route::get('/insurance', \App\Livewire\Reports\InsuranceReport::class)->name('insurance');
         Route::get('/performance', \App\Livewire\Reports\PerformanceReport::class)->name('performance');
+
     });
 
     // ============================================================
@@ -128,22 +145,17 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
     // ============================================================
 
     Route::prefix('patients')->name('patients.')->group(function () {
-        Route::get('/', fn() => view('patients.index'))->name('index');
-        Route::get('/create', fn() => view('patients.create'))->name('create');
-        Route::get('/{patient}', fn(\App\Models\Patient $patient) => view('patients.show', ['patient' => $patient]))->name('show');
+        Route::get('/', \App\Livewire\Patients\Index::class)->name('index');
+        Route::get('/create', \App\Livewire\Patients\Create::class)->name('create');
+        Route::get('/{patient}/edit', \App\Livewire\Patients\Edit::class)->name('edit');
     });
-
     // ============================================================
     // PHASE 2-3: APPOINTMENTS ROUTES
     // ============================================================
 
+
     Route::prefix('appointments')->name('appointments.')->group(function () {
-        Route::get('/', \App\Livewire\Appointments\AppointmentManagement::class)->name('index');
-        Route::get('/create', \App\Livewire\Appointments\AppointmentManagement::class)->name('create');
-        Route::get('/{id}', function ($id) {
-            $appointment = \App\Models\Appointment::findOrFail($id);
-            return view('livewire.appointments.show', ['appointment' => $appointment]);
-        })->name('show');
+        Route::get('/', fn() => view('appointments.appointments'))->name('index');
     });
 
     // ============================================================
@@ -227,6 +239,61 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
         Route::get('/settings', fn() => view('admin.settings'))->name('settings');
     });
 
+
+    // ============================================================
+    // PHASE 6: NOTIFICATIONS (All authenticated users)
+    // ============================================================
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+
+        // Notification Center - Full page view
+        Route::get('/', \App\Livewire\Notifications\NotificationCenter::class)
+            ->name('index');
+
+        // Mark notification as read (AJAX)
+        Route::post('/mark-read/{notification_id}', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])
+            ->name('mark-read');
+
+        // Mark all notifications as read
+        Route::post('/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])
+            ->name('mark-all-read');
+
+        // Delete a notification
+        Route::delete('/{notification_id}', [\App\Http\Controllers\NotificationController::class, 'delete'])
+            ->name('delete');
+
+    });
+
+    // ============================================================
+    // PHASE 6: NOTIFICATION PREFERENCES (Settings)
+    // ============================================================
+
+    Route::prefix('settings/notifications')->name('settings.notifications.')->group(function () {
+
+        // Notification preferences page
+        Route::get('/', \App\Livewire\Settings\NotificationPreferences::class)
+            ->name('index');
+
+        // Update preferences (AJAX)
+        Route::post('/update', [\App\Http\Controllers\NotificationController::class, 'updatePreferences'])
+            ->name('update');
+
+    });
+
+    Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/user/theme', function (Request $request) {
+        Auth::user()->update(['theme' => $request->input('theme')]);
+        return response()->json(['success' => true]);
+    });
+
+    Route::post('/user/language', function ($request) {
+        Auth::user()->update(['locale' => $request->input('language')]);
+        session(['locale' => $request->input('language')]);
+        return response()->json(['success' => true]);
+    });
+});
+
+
     // ============================================================
     // DEBUG ROUTE (Remove in production)
     // ============================================================
@@ -264,4 +331,4 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
 // BREEZE AUTH ROUTES
 // ============================================================
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

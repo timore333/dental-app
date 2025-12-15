@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             ProcedureSeeder::class,
             DoctorSeeder::class,
             InsuranceCompanySeeder::class,
+            PatientsSeeder::class
         ]);
 
 

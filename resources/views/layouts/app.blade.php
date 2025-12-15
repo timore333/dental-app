@@ -1,40 +1,68 @@
 @props(['title' => ''])
+    <!doctype html>
 
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ session('locale', 'en') === 'ar' ? 'rtl' : 'ltr' }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ $title ? $title . ' - ' : '' }}{{ config('app.name', 'Dental Center') }}</title>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->isLocale('ar') ? 'rtl' : 'ltr' }}"
+      class="">
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <!-- Styles -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans antialiased bg-gray-50 dark:bg-slate-900">
-        <div class="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-900">
-            <!-- Sidebar -->
-            @include('partials.sidebar')
+    <title>{{ config('app.name', 'Dental Clinic') }} - {{ $title ?? 'Dashboard' }}</title>
 
-            <!-- Main Content -->
-            <div class="flex-1 flex flex-col overflow-hidden">
-                <!-- Top Navbar -->
-                @include('partials.navbar')
+    <!-- Soft UI CSS -->
+    <link rel="stylesheet" href="{{ asset('soft-ui/css/soft-ui.css') }}">
 
-                <!-- Page Content -->
-                <main class="flex-1 overflow-auto bg-gray-50 dark:bg-slate-900 px-4 py-6 sm:px-6 lg:px-8">
-                     @yield('content')
-                </main>
+    <!-- Custom Overrides -->
+    {{--    <link rel="stylesheet" href="{{ asset('css/theme-overrides.css') }}">--}}
 
-                <!-- Footer -->
-                @include('partials.footer')
-            </div>
-        </div>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
 
-        @livewireScripts
-    </body>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    @livewireStyles
+</head>
+
+
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+
+<!-- Navigation -->
+@include('partials.soft.nav')
+
+<div class="flex">
+
+    @include('partials.soft.sidebar')
+    {{--    <div class="hidden fixed inset-0 z-10 bg-gray-900 opacity-50" id="sidebarBackdrop"></div>--}}
+    <div class="hidden fixed inset-0 z-10 bg-gray-900 opacity-50" id="sidebarBackdrop"></div>
+    <div id="main-content"
+         class="h-full w-full bg-gray-50 relative overflow-y-auto  {{ app()->isLocale('ar') ? 'lg:mr-64' : 'lg:ml-64' }} ">
+
+        <main class="ltr:ml-64 rtl:mr-64 flex-1">
+            @isset($slot)
+                {{ $slot }}
+            @else
+                @yield('content')
+            @endisset
+            {{--@include('partials.soft.original-dashboard-content')--}}
+
+        </main>
+        @include('partials.soft.footer')
+
+
+    </div>
+
+</div>
+
+
+<script src="{{ asset('soft-ui/js/soft-ui.bundle.js') }}"></script>
+
+@livewireScripts
+
+</body>
 </html>

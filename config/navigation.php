@@ -3,18 +3,29 @@
 return [
     'admin' => [
         [
-            'icon' => '📊',
             'label' => 'Dashboard',
+            'icon' => 'heroicon-s-user',
             'route' => 'dashboard',
+            'sub' => false,
             'active' => 'dashboard',
+            'background-color' => 'bg-fuchsia-500',
         ],
 
         [
-            'icon' => '👥',
+            'label' => 'Users',
+            'icon' => 'heroicon-s-user',
+            'route' => 'admin.users.index',
+            'sub' => false,
+            'active' => 'users.*',
+        ],
+
+        [
             'label' => 'Patients',
-            'route' => 'patients.index',
+            'icon' => 'heroicon-o-user',
+            'route' => 'admin.patients.index',
+            'sub' => true,
             'active' => 'patients.*',
-            'sub' => [
+            'sub-items' => [
                 ['label' => 'All Patients', 'route' => 'patients.index'],
                 ['label' => 'New Patient', 'route' => 'patients.create'],
             ],
@@ -24,19 +35,17 @@ return [
             'icon' => '📅',
             'label' => 'Appointments',
             'route' => 'appointments.index',
+            'sub' => false,
             'active' => 'appointments.*',
-            'sub' => [
-                ['label' => 'All Appointments', 'route' => 'appointments.index'],
-                ['label' => 'New Appointment', 'route' => 'appointments.create'],
-            ],
         ],
 
         [
             'icon' => '🏥',
             'label' => 'Insurance',
             'route' => 'insurance.index',
+            'sub' => true,
             'active' => 'insurance.*',
-            'sub' => [
+            'sub-items' => [
                 ['label' => 'Companies', 'route' => 'insurance.index'],
                 ['label' => 'New Company', 'route' => 'insurance.create'],
             ],
@@ -46,6 +55,7 @@ return [
             'icon' => '🔧',
             'label' => 'Procedures',
             'route' => 'procedures.index',
+            'sub' => false,
             'active' => 'procedures.*',
         ],
 
@@ -53,6 +63,7 @@ return [
             'icon' => '💳',
             'label' => 'Payments',
             'route' => 'payments.index',
+            'sub' => false,
             'active' => 'payments.*',
         ],
 
@@ -60,6 +71,7 @@ return [
             'icon' => '📈',
             'label' => 'Reports',
             'route' => 'reports.index',
+            'sub' => false,
             'active' => 'reports.*',
         ],
 
@@ -67,6 +79,7 @@ return [
             'icon' => '⚙️',
             'label' => 'Settings',
             'route' => 'profile.edit',
+            'sub' => false,
             'active' => 'profile.*',
         ],
     ],
@@ -76,6 +89,7 @@ return [
             'icon' => '📊',
             'label' => 'Dashboard',
             'route' => 'dashboard',
+            'sub' => false,
             'active' => 'dashboard',
         ],
 
@@ -83,6 +97,7 @@ return [
             'icon' => '👥',
             'label' => 'Patients',
             'route' => 'patients.index',
+            'sub' => false,
             'active' => 'patients.*',
         ],
 
@@ -90,6 +105,7 @@ return [
             'icon' => '📅',
             'label' => 'Appointments',
             'route' => 'appointments.index',
+            'sub' => false,
             'active' => 'appointments.*',
         ],
 
@@ -97,6 +113,7 @@ return [
             'icon' => '💳',
             'label' => 'Payments',
             'route' => 'payments.index',
+            'sub' => false,
             'active' => 'payments.*',
         ],
 
@@ -104,6 +121,7 @@ return [
             'icon' => '⚙️',
             'label' => 'Settings',
             'route' => 'profile.edit',
+            'sub' => false,
             'active' => 'profile.*',
         ],
     ],
@@ -113,6 +131,7 @@ return [
             'icon' => '📊',
             'label' => 'Dashboard',
             'route' => 'dashboard',
+            'sub' => false,
             'active' => 'dashboard',
         ],
 
@@ -120,6 +139,7 @@ return [
             'icon' => '👥',
             'label' => 'Patients',
             'route' => 'patients.index',
+            'sub' => false,
             'active' => 'patients.*',
         ],
 
@@ -127,6 +147,7 @@ return [
             'icon' => '📅',
             'label' => 'Appointments',
             'route' => 'appointments.index',
+            'sub' => false,
             'active' => 'appointments.*',
         ],
 
@@ -134,6 +155,7 @@ return [
             'icon' => '🔧',
             'label' => 'Procedures',
             'route' => 'procedures.index',
+            'sub' => false,
             'active' => 'procedures.*',
         ],
 
@@ -141,6 +163,7 @@ return [
             'icon' => '📈',
             'label' => 'Reports',
             'route' => 'reports.index',
+            'sub' => false,
             'active' => 'reports.*',
         ],
 
@@ -148,6 +171,7 @@ return [
             'icon' => '⚙️',
             'label' => 'Settings',
             'route' => 'profile.edit',
+            'sub' => false,
             'active' => 'profile.*',
         ],
     ],
@@ -157,6 +181,7 @@ return [
             'icon' => '📊',
             'label' => 'Dashboard',
             'route' => 'dashboard',
+            'sub' => false,
             'active' => 'dashboard',
         ],
 
@@ -164,6 +189,7 @@ return [
             'icon' => '💳',
             'label' => 'Payments',
             'route' => 'payments.index',
+            'sub' => false,
             'active' => 'payments.*',
         ],
 
@@ -171,6 +197,7 @@ return [
             'icon' => '📈',
             'label' => 'Reports',
             'route' => 'reports.index',
+            'sub' => false,
             'active' => 'reports.*',
         ],
 
@@ -178,6 +205,7 @@ return [
             'icon' => '🏥',
             'label' => 'Insurance',
             'route' => 'insurance.index',
+            'sub' => false,
             'active' => 'insurance.*',
         ],
 
@@ -185,6 +213,7 @@ return [
             'icon' => '⚙️',
             'label' => 'Settings',
             'route' => 'profile.edit',
+            'sub' => false,
             'active' => 'profile.*',
         ],
     ],

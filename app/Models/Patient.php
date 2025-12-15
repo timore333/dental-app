@@ -12,7 +12,10 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Patient extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
+    use HasFactory;
+
+    // ==================== PROPERTIES ====================
 
     protected $fillable = [
         'file_number',
@@ -25,6 +28,9 @@ class Patient extends Model
         'gender',
         'address',
         'city',
+        'country',
+        'job',
+        'category',
         'type',
         'insurance_company_id',
         'insurance_card_number',
@@ -37,12 +43,16 @@ class Patient extends Model
     ];
 
     protected $casts = [
-        'type' => 'string', // cash, insurance
-        'gender' => 'string', // male, female
         'date_of_birth' => 'date',
         'insurance_expiry_date' => 'date',
         'is_active' => 'boolean',
     ];
+
+    // ==================== CONSTANTS ====================
+
+    const CATEGORIES = ['normal', 'exacting', 'vip', 'special'];
+    const PAYMENT_TYPES = ['cash', 'insurance'];
+    const GENDERS = ['male', 'female'];
 
     // ==================== RELATIONSHIPS ====================
 
@@ -102,6 +112,22 @@ class Patient extends Model
         return $this->morphOne(Account::class, 'accountable');
     }
 
+    /**
+     * Who created this patient
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Who last updated this patient
+     */
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
     // ==================== ACCESSORS & MUTATORS ====================
 
     /**
@@ -120,7 +146,24 @@ class Patient extends Model
         if (!$this->date_of_birth) {
             return null;
         }
+
         return now()->diffInYears($this->date_of_birth);
+    }
+
+    /**
+     * Get age display string
+     */
+    public function getAgeDisplayAttribute(): string
+    {
+        return $this->age ? "{$this->age} years" : 'N/A';
+    }
+
+    /**
+     * Get category display (formatted)
+     */
+    public function getCategoryLabelAttribute(): string
+    {
+        return ucfirst($this->category);
     }
 
     // ==================== SCOPES ====================
@@ -134,10 +177,88 @@ class Patient extends Model
     }
 
     /**
-     * Filter by patient type (cash or insurance)
+     * Filter by patient category
+     */
+    public function scopeByCategory($query, string $category)
+    {
+        if ($category === 'all' || empty($category)) {
+            return $query;
+        }
+        return $query->where('category', $category);
+    }
+
+    /**
+     * Filter by city/location
+     */
+    public function scopeByCity($query, string $city)
+    {
+        if (empty($city)) {
+            return $query;
+        }
+        return $query->where('city', 'like', "%{$city}%");
+    }
+
+    /**
+     * Filter by job
+     */
+    public function scopeByJob($query, string $job)
+    {
+        if (empty($job)) {
+            return $query;
+        }
+        return $query->where('job', 'like', "%{$job}%");
+    }
+
+    /**
+     * Search by name, email, or phone
+     */
+    public function scopeSearch($query, string $search)
+    {
+        if (empty($search)) {
+            return $query;
+        }
+
+        return $query->where('first_name', 'like', "%{$search}%")
+            ->orWhere('last_name', 'like', "%{$search}%")
+            ->orWhere('email', 'like', "%{$search}%")
+            ->orWhere('phone', 'like', "%{$search}%");
+    }
+
+    /**
+     * Filter by birth date range
+     */
+    public function scopeByBirthDateRange($query, ?string $fromDate, ?string $toDate)
+    {
+        if ($fromDate) {
+            $query->whereDate('date_of_birth', '>=', $fromDate);
+        }
+
+        if ($toDate) {
+            $query->whereDate('date_of_birth', '<=', $toDate);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Filter by gender
+     */
+    public function scopeByGender($query, string $gender)
+    {
+        if (empty($gender) || $gender === 'all') {
+            return $query;
+        }
+        return $query->where('gender', $gender);
+    }
+
+    /**
+     * Filter by payment type
      */
     public function scopeByType($query, string $type)
     {
+        if (empty($type) || $type === 'all') {
+            return $query;
+        }
         return $query->where('type', $type);
     }
 
@@ -168,14 +289,39 @@ class Patient extends Model
     }
 
     /**
+     * Check if patient is VIP
+     */
+    public function isVip(): bool
+    {
+        return $this->category === 'vip';
+    }
+
+    /**
+     * Check if patient is exacting (requires special attention)
+     */
+    public function isExacting(): bool
+    {
+        return $this->category === 'exacting';
+    }
+
+    /**
+     * Check if patient is special (special needs/cases)
+     */
+    public function isSpecial(): bool
+    {
+        return $this->category === 'special';
+    }
+
+    /**
      * Get file number (returns existing or generates new)
      */
     public function getFileNumber(): ?int
     {
         if (!$this->file_number) {
-            $this->file_number = $this->generateNextFileNumber();
+            $this->file_number = self::generateNextFileNumber();
             $this->save();
         }
+
         return $this->file_number;
     }
 
@@ -186,7 +332,36 @@ class Patient extends Model
     {
         $lastPatient = self::orderByDesc('file_number')->first();
         $lastNumber = $lastPatient?->file_number ?? 0;
+
         return $lastNumber + 1;
+    }
+
+    /**
+     * Get category badge color
+     */
+    public function getCategoryColorAttribute(): string
+    {
+        return match($this->category) {
+            'normal' => 'gray',
+            'exacting' => 'yellow',
+            'vip' => 'purple',
+            'special' => 'red',
+            default => 'gray',
+        };
+    }
+
+    /**
+     * Get category icon
+     */
+    public function getCategoryIconAttribute(): string
+    {
+        return match($this->category) {
+            'normal' => '👤',
+            'exacting' => '⚠️',
+            'vip' => '👑',
+            'special' => '🌟',
+            default => '👤',
+        };
     }
 
     // ==================== EVENTS ====================
@@ -198,6 +373,11 @@ class Patient extends Model
             if (!$patient->created_by) {
                 $patient->created_by = auth()->id() ?? 1;
             }
+        });
+
+        // Auto-set updated_by when updating patient
+        static::updating(function ($patient) {
+            $patient->updated_by = auth()->id() ?? 1;
         });
     }
 }
