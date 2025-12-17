@@ -23,12 +23,13 @@ class Index extends Component
 
     public $sortField = 'first_name';
     public $sortDirection = 'desc';
-    public $perPage = 100;
+    public $perPage = 10;
 
     public $selectedPatient = null;
     public $showViewModal = false;
     public $showDeleteConfirm = false;
     public $patientId = null;
+    public array $navigation = [];
 
     // ==================== LISTENERS ====================
 
@@ -44,6 +45,10 @@ class Index extends Component
         // Initialize filters from session or defaults
         $this->search = session('patient_search', '');
         $this->filterCategory = session('patient_category', 'all');
+        $this->navigation = [
+            ['label' => __('Home'), 'url' => route('dashboard')],
+            ['label' => __('Patients'), 'url' => route('patients.index'), 'active' => true],
+        ];
     }
 
     public function render()

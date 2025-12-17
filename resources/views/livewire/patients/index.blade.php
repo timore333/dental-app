@@ -2,8 +2,6 @@
     <div
         class="block justify-between items-center p-4 mx-4 mt-9 mb-6 bg-white rounded-2xl shadow-xl shadow-gray-200 lg:p-5 sm:flex">
 
-       <x-flash-messages-display></x-flash-messages-display>
-
         <div class="mb-1 w-full">
             {{-- Bread cramp--}}
             <div class="mb-4">
@@ -249,11 +247,16 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr class="hover:bg-gray-100">
-                                <td colspan="6" class="p-4 w-4 lg:p-5 ">
-                                    <p class="text-lg">🚫 {{__('No patients found')}}</p>
-                                </td>
-                            </tr>
+                            <tr>
+                            <td colspan="12" class="px-6 py-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                                    </svg>
+                                    <p>{{__('No users found')}}</p>
+                                </div>
+                            </td>
+                        </tr>
                         @endforelse
 
                         </tbody>

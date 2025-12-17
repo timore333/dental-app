@@ -20,6 +20,14 @@ class PatientService
      */
     public function createPatient(array $data): Patient
     {
+        // Ensure empty strings are converted to null
+        foreach ($data as $key => $value) {
+            if ($value === '') {
+                $data[$key] = null;
+            }
+        }
+
+
         try {
             return DB::transaction(function () use ($data) {
                 // Generate file number
