@@ -5,8 +5,14 @@
 
     <title>{{ config('app.name', 'Dental Clinic') }} - {{ $title ?? 'Dashboard' }}</title>
 
-    <!-- Soft UI CSS -->
+
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+
     <link rel="stylesheet" href="{{ asset('soft-ui/css/soft-ui.css') }}">
+    <link rel="stylesheet" href="{{ asset('soft-ui/css/custom.css') }}">
+    <!-- Soft UI CSS -->
 
 
     <!-- Fonts -->

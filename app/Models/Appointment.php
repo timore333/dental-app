@@ -12,10 +12,13 @@ class Appointment extends Model
 {
     use HasFactory, SoftDeletes;
 
+    const APPOINTMENT_DURATION = 30;
+
     protected $fillable = [
         'patient_id',
         'doctor_id',
-        'appointment_date',
+        'start',
+        'end',
         'status',
         'reason',
         'notes',
@@ -23,7 +26,8 @@ class Appointment extends Model
     ];
 
     protected $casts = [
-        'appointment_date' => 'datetime',
+        'start' => 'datetime',
+        'end' => 'datetime',
         'status' => 'string', // scheduled, completed, cancelled, no-show
     ];
 
@@ -60,7 +64,7 @@ class Appointment extends Model
      */
     public function scopeUpcoming($query)
     {
-        return $query->where('appointment_date', '>=', now())
+        return $query->where('start', '>=', now())
             ->where('status', 'scheduled');
     }
 
@@ -69,7 +73,7 @@ class Appointment extends Model
      */
     public function scopePast($query)
     {
-        return $query->where('appointment_date', '<', now());
+        return $query->where('start', '<', now());
     }
 
     /**
@@ -85,7 +89,7 @@ class Appointment extends Model
      */
     public function scopeByDate($query, $date)
     {
-        return $query->whereDate('appointment_date', $date);
+        return $query->whereDate('start', $date);
     }
 
     /**
@@ -98,27 +102,5 @@ class Appointment extends Model
 
     // ==================== METHODS ====================
 
-    /**
-     * Mark appointment as completed
-     */
-    public function markCompleted(): bool
-    {
-        return $this->update(['status' => 'completed']);
-    }
 
-    /**
-     * Mark appointment as cancelled
-     */
-    public function markCancelled(): bool
-    {
-        return $this->update(['status' => 'cancelled']);
-    }
-
-    /**
-     * Mark appointment as no-show
-     */
-    public function markNoShow(): bool
-    {
-        return $this->update(['status' => 'no-show']);
-    }
 }

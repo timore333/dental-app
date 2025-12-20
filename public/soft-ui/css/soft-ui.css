@@ -4124,3 +4124,7 @@ input:checked+.toggle-bg {
 }
 
 /*# sourceMappingURL=app.css.map*/
+
+[x-cloak] {
+    display: none !important;
+}

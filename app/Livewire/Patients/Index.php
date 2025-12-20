@@ -36,6 +36,7 @@ class Index extends Component
     protected $listeners = [
         'patientCreated' => 'onPatientCreated',
         'patientUpdated' => 'onPatientUpdated',
+        'patientsImported' => 'onPatientsImported',  // NEW
     ];
 
     // ==================== LIFECYCLE ====================
@@ -204,4 +205,6 @@ class Index extends Component
         $this->resetFilters();
         session()->flash('message', 'Patient updated successfully!');
     }
+
+
 }

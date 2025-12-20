@@ -47,6 +47,7 @@ class Patient extends Model
         'insurance_expiry_date' => 'date',
         'is_active' => 'boolean',
     ];
+    protected $appends = ['name'];
 
     // ==================== CONSTANTS ====================
 
@@ -341,7 +342,7 @@ class Patient extends Model
      */
     public function getCategoryColorAttribute(): string
     {
-        return match($this->category) {
+        return match ($this->category) {
             'normal' => 'gray',
             'exacting' => 'yellow',
             'vip' => 'purple',
@@ -355,13 +356,17 @@ class Patient extends Model
      */
     public function getCategoryIconAttribute(): string
     {
-        return match($this->category) {
+        return match ($this->category) {
             'normal' => '👤',
             'exacting' => '⚠️',
             'vip' => '👑',
             'special' => '🌟',
             default => '👤',
         };
+    }
+
+    public function getName(){
+        return $this->first_name .' '. $this->middle_name .' '. $this->last_name;
     }
 
     // ==================== EVENTS ====================

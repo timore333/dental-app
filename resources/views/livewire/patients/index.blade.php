@@ -67,7 +67,7 @@
 
                 {{--Add New User--}}
                 <div class="flex items-center ml-auto space-x-2 sm:space-x-3">
-                    <button type="button" data-modal-toggle="add-user-modal"
+                    <a href="{{route('patients.create')}}" type="button"
                             class="inline-flex items-center py-2 px-3 text-sm font-medium text-center text-white rounded-lg bg-gradient-to-br from-pink-500 to-voilet-500 sm:ml-auto shadow-md shadow-gray-300 hover:scale-[1.02] transition-transform">
                         <svg class="mr-2 -ml-1 w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
                              xmlns="http://www.w3.org/2000/svg">
@@ -76,8 +76,11 @@
                                   clip-rule="evenodd"></path>
                         </svg>
                         {{__('Add Patient')}}
-                    </button>
-                    <a href="#"
+
+                    </a>
+
+
+                    <a href="{{route('patients.import')}}"
                        class="inline-flex justify-center items-center py-2 px-3 w-1/2 text-sm font-medium text-center text-gray-900 bg-white rounded-lg border border-gray-300 hover:bg-gray-100 hover:scale-[1.02] transition-transform sm:w-auto">
                         <svg class="mr-2 -ml-1 w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
                              xmlns="http://www.w3.org/2000/svg">
@@ -85,8 +88,12 @@
                                   d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
                                   clip-rule="evenodd"></path>
                         </svg>
-                        {{__('Export')}}
+                        {{__('Import')}}
                     </a>
+
+
+
+
                 </div>
             </div>
         </div>
@@ -100,14 +107,7 @@
                     <table class="min-w-full divide-y divide-gray-200 table-fixed">
                         <thead class="bg-white">
                         <tr>
-                            <th scope="col" class="p-4 lg:p-5">
-                                <div class="flex items-center">
-                                    <input id="checkbox-all" aria-describedby="checkbox-1" type="checkbox"
-                                           class="w-5 h-5 rounded border-gray-300 focus:ring-0 checked:bg-dark-900">
-                                    <label for="checkbox-all" class="sr-only">checkbox</label>
-                                </div>
-                            </th>
-                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase lg:p-5"
+                                           <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase lg:p-5"
                                 wire:click="sort('file_number')">
 
 
@@ -124,6 +124,7 @@
                                 </div>
 
                             </th>
+
                             <th scope="col"
                                 class="p-4 text-xs font-medium text-left text-gray-500 uppercase lg:p-5 cursor-pointer"
                                 wire:click="sort('first_name')">
@@ -187,29 +188,18 @@
                         @forelse ($patients as $patient)
                             <tr class="hover:bg-gray-100">
 
-                                <td class="p-4 w-4 lg:p-5 ">
-                                    <div class="flex items-center">
-                                        <input id="checkbox-1" aria-describedby="checkbox-1" type="checkbox"
-                                               class="w-5 h-5 rounded border-gray-300 focus:ring-0 checked:bg-dark-900">
-                                        <label for="checkbox-1" class="sr-only">checkbox</label>
-                                    </div>
-                                </td>
-
                                 <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap lg:p-5">{{$patient->file_number}}</td>
 
                                 <td class="flex items-center p-4 mr-12 space-x-6 whitespace-nowrap lg:p-5 lg:mr-0">
-                                    <img class="w-8 h-8 rounded"
-                                         src="https://demos.creative-tim.com/soft-ui-flowbite-pro/images/users/neil-sims.png"
-                                         alt="Neil Sims avatar">
+
                                     <div class="text-sm font-normal text-gray-500">
-                                        <div class="text-base font-semibold text-gray-900">{{$patient->name}}</div>
-                                        <div class="text-sm font-normal text-gray-500">{{$patient->email}}</div>
+                                        <div class="text-base font-semibold text-gray-900">{{$patient->getName()}}</div>
                                     </div>
                                 </td>
 
                                 <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap lg:p-5">{{$patient->phone}} </td>
                                 <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap lg:p-5">{{$patient->email}} </td>
-                                <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap lg:p-5">{{$patient->date_of_birth}} </td>
+                                <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap lg:p-5">{{dateForHumans($patient->date_of_birth, 'short')}} </td>
                                 <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap lg:p-5">{{$patient->address}} </td>
                                 <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap lg:p-5">{{$patient->job}} </td>
                                 <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap lg:p-5">{{$patient->category}} </td>
@@ -265,52 +255,53 @@
             </div>
         </div>
     </div>
-    <div
-        class="items-center p-4 my-4 mx-4 bg-white rounded-2xl shadow-xl shadow-gray-200 sm:flex sm:justify-between">
-        <div class="flex items-center mb-4 sm:mb-0">
-            <a href="#"
-               class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">
-                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                          d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                          clip-rule="evenodd"></path>
-                </svg>
-            </a>
-            <a href="#"
-               class="inline-flex justify-center p-1 mr-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">
-                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                          clip-rule="evenodd"></path>
-                </svg>
-            </a>
-            <span class="text-sm font-normal text-gray-500">Showing <span
-                    class="font-semibold text-gray-900">1-20</span> of <span
-                    class="font-semibold text-gray-900">2290</span></span>
-        </div>
-        <div class="flex items-center space-x-3">
-            <a href="#"
-               class="inline-flex flex-1 justify-center items-center py-2 px-3 text-sm font-medium text-center text-white bg-gradient-to-br from-dark-700 to-dark-900 rounded-lg shadow-md shadow-gray-300 hover:scale-[1.02] transition-transform">
-                <svg class="mr-1 -ml-1 w-5 h-5"
-                     fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                          d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                          clip-rule="evenodd"></path>
-                </svg>
-                Previous
-            </a>
-            <a href="#"
-               class="inline-flex flex-1 justify-center items-center py-2 px-3 text-sm font-medium text-center text-white bg-gradient-to-br from-dark-700 to-dark-900 rounded-lg shadow-md shadow-gray-300 hover:scale-[1.02] transition-transform">
-                Next
-                <svg class="ml-1 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                          clip-rule="evenodd"></path>
-                </svg>
-            </a>
-        </div>
-    </div>
+    {{$patients->links()}}
+{{--    <div--}}
+{{--        class="items-center p-4 my-4 mx-4 bg-white rounded-2xl shadow-xl shadow-gray-200 sm:flex sm:justify-between">--}}
+{{--        <div class="flex items-center mb-4 sm:mb-0">--}}
+{{--            <a href="#"--}}
+{{--               class="inline-flex justify-center p-1 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">--}}
+{{--                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">--}}
+{{--                    <path fill-rule="evenodd"--}}
+{{--                          d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"--}}
+{{--                          clip-rule="evenodd"></path>--}}
+{{--                </svg>--}}
+{{--            </a>--}}
+{{--            <a href="#"--}}
+{{--               class="inline-flex justify-center p-1 mr-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">--}}
+{{--                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">--}}
+{{--                    <path fill-rule="evenodd"--}}
+{{--                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"--}}
+{{--                          clip-rule="evenodd"></path>--}}
+{{--                </svg>--}}
+{{--            </a>--}}
+{{--            <span class="text-sm font-normal text-gray-500">Showing <span--}}
+{{--                    class="font-semibold text-gray-900">1-20</span> of <span--}}
+{{--                    class="font-semibold text-gray-900">2290</span></span>--}}
+{{--        </div>--}}
+{{--        <div class="flex items-center space-x-3">--}}
+{{--            <a href="#"--}}
+{{--               class="inline-flex flex-1 justify-center items-center py-2 px-3 text-sm font-medium text-center text-white bg-gradient-to-br from-dark-700 to-dark-900 rounded-lg shadow-md shadow-gray-300 hover:scale-[1.02] transition-transform">--}}
+{{--                <svg class="mr-1 -ml-1 w-5 h-5"--}}
+{{--                     fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">--}}
+{{--                    <path fill-rule="evenodd"--}}
+{{--                          d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"--}}
+{{--                          clip-rule="evenodd"></path>--}}
+{{--                </svg>--}}
+{{--                Previous--}}
+{{--            </a>--}}
+{{--            <a href="#"--}}
+{{--               class="inline-flex flex-1 justify-center items-center py-2 px-3 text-sm font-medium text-center text-white bg-gradient-to-br from-dark-700 to-dark-900 rounded-lg shadow-md shadow-gray-300 hover:scale-[1.02] transition-transform">--}}
+{{--                Next--}}
+{{--                <svg class="ml-1 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"--}}
+{{--                     xmlns="http://www.w3.org/2000/svg">--}}
+{{--                    <path fill-rule="evenodd"--}}
+{{--                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"--}}
+{{--                          clip-rule="evenodd"></path>--}}
+{{--                </svg>--}}
+{{--            </a>--}}
+{{--        </div>--}}
+{{--    </div>--}}
 
     <!-- Edit User Modal -->
     <div

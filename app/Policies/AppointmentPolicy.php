@@ -1,25 +1,28 @@
 <?php
+
 namespace App\Policies;
-use App\Models\Appointment;
+
 use App\Models\User;
+use App\Models\Appointment;
 
 class AppointmentPolicy
 {
     public function viewAny(User $user)
     {
-        return in_array($user->role, ['receptionist', 'doctor', 'admin']);
+        return $user->isAdmin() || $user->isDoctor() || $user->isReceptionist();
     }
 
     public function view(User $user, Appointment $appointment)
     {
         return $user->id === $appointment->created_by
             || $user->doctor?->id === $appointment->doctor_id
-            || $user->role === 'admin';
+            || $user->isAdmin();
     }
 
     public function create(User $user)
     {
-        return in_array($user->role, ['receptionist', 'admin']);
+        // Use helper methods - they handle case insensitivity
+        return $user->isAdmin() || $user->isReceptionist();
     }
 
     public function update(User $user, Appointment $appointment)
@@ -28,7 +31,7 @@ class AppointmentPolicy
             return false;
         }
 
-        return $user->id === $appointment->created_by || $user->role === 'admin';
+        return $user->isAdmin() || $user->id === $appointment->created_by;
     }
 
     public function delete(User $user, Appointment $appointment)
@@ -37,11 +40,11 @@ class AppointmentPolicy
             return false;
         }
 
-        return $user->id === $appointment->created_by || $user->role === 'admin';
+        return $user->isAdmin() || $user->id === $appointment->created_by;
     }
 
     public function complete(User $user, Appointment $appointment)
     {
-        return $user->doctor?->id === $appointment->doctor_id || $user->role === 'admin';
+        return $user->isDoctor() || $user->isAdmin();
     }
 }

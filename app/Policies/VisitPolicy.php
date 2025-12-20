@@ -7,19 +7,19 @@ class VisitPolicy
 {
     public function viewAny(User $user)
     {
-        return in_array($user->role, ['doctor', 'accountant', 'admin']);
+        return $user->isAdmin() || $user->isDoctor() || $user->isReceptionist();
     }
 
     public function view(User $user, Visit $visit)
     {
         return $user->doctor?->id === $visit->doctor_id
-            || $user->role === 'accountant'
-            || $user->role === 'admin';
+            || $user->isAccountant()
+            || $user->isAdmin();
     }
 
     public function create(User $user)
     {
-        return in_array($user->role, ['doctor', 'admin']);
+       return $user->isAdmin() || $user->isDoctor();
     }
 
     public function update(User $user, Visit $visit)
@@ -28,11 +28,11 @@ class VisitPolicy
             return false;
         }
 
-        return $user->doctor?->id === $visit->doctor_id || $user->role === 'admin';
+        return $user->doctor?->id === $visit->doctor_id || $user->isAdmin();
     }
 
     public function delete(User $user, Visit $visit)
     {
-        return $user->role === 'admin';
+       return $user->isAdmin();
     }
 }

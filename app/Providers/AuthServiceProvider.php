@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Appointment;
 use App\Models\User;
+use App\Models\Visit;
+use App\Policies\AppointmentPolicy;
 use App\Policies\UserPolicy;
+use App\Policies\VisitPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
@@ -16,6 +20,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         User::class => UserPolicy::class,
+        Appointment::class => AppointmentPolicy::class,
+        Visit::class => VisitPolicy::class,
     ];
 
     /**

@@ -9,8 +9,9 @@ use Illuminate\Http\Request;
 // ============================================================
 
 Route::get('/test', function () {
-    return view('welcome');
+    return view('dashboard-template');
 });
+
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('login');
@@ -148,6 +149,7 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
         Route::get('/', \App\Livewire\Patients\Index::class)->name('index');
         Route::get('/create', \App\Livewire\Patients\Create::class)->name('create');
         Route::get('/{patient}/edit', \App\Livewire\Patients\Edit::class)->name('edit');
+           Route::get('/import', \App\Livewire\Patients\PatientImport::class)->name('import');
     });
     // ============================================================
     // PHASE 2-3: APPOINTMENTS ROUTES
@@ -156,6 +158,17 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
 
     Route::prefix('appointments')->name('appointments.')->group(function () {
         Route::get('/', fn() => view('appointments.appointments'))->name('index');
+
+        // Appointment Calendar
+        Route::get('/calendar', \App\Livewire\Appointments\Calendar::class)->name('calendar');
+
+        // API Routes for Calendar
+//        Route::prefix('api')->group(function () {
+//            Route::get('/calendar/events', [\App\Http\Controllers\Api\CalendarController::class, 'getEvents'])->name('api.calendar.events');
+//            Route::post('/calendar/{appointment}/reschedule', [\App\Http\Controllers\Api\CalendarController::class, 'reschedule'])->name('api.calendar.reschedule');
+//        });
+
+
     });
 
     // ============================================================
@@ -281,17 +294,17 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
     });
 
     Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/user/theme', function (Request $request) {
-        Auth::user()->update(['theme' => $request->input('theme')]);
-        return response()->json(['success' => true]);
-    });
+        Route::post('/user/theme', function (Request $request) {
+            Auth::user()->update(['theme' => $request->input('theme')]);
+            return response()->json(['success' => true]);
+        });
 
-    Route::post('/user/language', function ($request) {
-        Auth::user()->update(['locale' => $request->input('language')]);
-        session(['locale' => $request->input('language')]);
-        return response()->json(['success' => true]);
+        Route::post('/user/language', function ($request) {
+            Auth::user()->update(['locale' => $request->input('language')]);
+            session(['locale' => $request->input('language')]);
+            return response()->json(['success' => true]);
+        });
     });
-});
 
 
     // ============================================================

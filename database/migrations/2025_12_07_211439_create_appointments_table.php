@@ -16,7 +16,9 @@ return new class extends Migration
             $table->foreignId('doctor_id')->nullable()->constrained('doctors')->nullOnDelete();
 
             // Appointment details
-            $table->dateTime('appointment_date');
+            $table->dateTime('appointment_date')->nullable();// will be deleted
+            $table->dateTime('start');
+            $table->dateTime('end');
             $table->enum('status', ['scheduled', 'completed', 'cancelled', 'no-show'])->default('scheduled');
             $table->text('reason')->nullable();
             $table->text('notes')->nullable();

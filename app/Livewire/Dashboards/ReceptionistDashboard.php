@@ -3,6 +3,7 @@
 namespace App\Livewire\Dashboards;
 
 use App\Models\Appointment;
+use App\Models\Bill;
 use App\Models\InsuranceRequest;
 use App\Models\Patient;
 use Carbon\Carbon;
@@ -12,8 +13,8 @@ use Livewire\Component;
 class ReceptionistDashboard extends Component
 {
     public string $dateRange = '30days';
-    public ?\DateTime $fromDate = null;
-    public ?\DateTime $toDate = null;
+    public $fromDate;
+    public $toDate;
 
     public function mount(): void
     {
@@ -23,18 +24,14 @@ class ReceptionistDashboard extends Component
     /**
      * Set the date range for metrics
      */
-    public function setDateRange(string $range): void
+    public function setDateRange(string $range = '30days'): void
     {
         $this->dateRange = $range;
         $today = Carbon::now();
 
-        match($range) {
+        match ($range) {
             '7days' => [
                 $this->fromDate = $today->copy()->subDays(7)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-            '30days' => [
-                $this->fromDate = $today->copy()->subDays(30)->startOfDay(),
                 $this->toDate = $today->endOfDay(),
             ],
             '90days' => [
@@ -58,35 +55,80 @@ class ReceptionistDashboard extends Component
     public function getMetrics(): array
     {
         return [
-            // ✅ FIXED: All appointments (not filtered by user)
+            'total_patients' => Patient::count(),
+            'appointments_today' => Appointment::whereDate('appointment_date', Carbon::today())
+                ->count(),
+            'revenue_month' => Bill::whereMonth('created_at', Carbon::now()->month)
+                ->whereYear('created_at', Carbon::now()->year)
+                ->where('status', 'paid')
+                ->sum('total_amount'),
+            'pending_payments' => Bill::where('status', 'pending')
+                ->orWhere('status', 'partial')
+                ->count(),
             'total_appointments' => Appointment::whereBetween('appointment_date', [$this->fromDate, $this->toDate])
                 ->count(),
-
-            // ✅ FIXED: Scheduled appointments
-            'scheduled_appointments' => Appointment::whereBetween('appointment_date', [$this->fromDate, $this->toDate])
+            'scheduled_appointments' => Appointment::whereDate('appointment_date', '>=', Carbon::today())
                 ->where('status', 'scheduled')
                 ->count(),
-
-            // ✅ FIXED: Completed appointments
             'completed_appointments' => Appointment::whereBetween('appointment_date', [$this->fromDate, $this->toDate])
                 ->where('status', 'completed')
                 ->count(),
-
-            // ✅ FIXED: New patients registered
             'new_patients' => Patient::whereBetween('created_at', [$this->fromDate, $this->toDate])
                 ->count(),
-
-            // ✅ FIXED: Total patients in system
-            'total_patients' => Patient::count(),
-
-            // ✅ FIXED: Pending insurance requests
             'pending_insurance_requests' => InsuranceRequest::where('status', 'pending')
                 ->count(),
-
-            // ✅ FIXED: Pending appointments
             'pending_appointments' => Appointment::where('status', 'pending')
                 ->count(),
         ];
+    }
+
+    /**
+     * Get today's appointments
+     */
+    public function getTodayAppointments()
+    {
+        return Appointment::with(['patient', 'doctor'])
+            ->whereDate('appointment_date', Carbon::today())
+            ->orderBy('appointment_date', 'asc')
+            ->limit(10)
+            ->get();
+    }
+
+    /**
+     * Get recent appointments
+     */
+    public function getRecentAppointments()
+    {
+        return Appointment::with(['patient', 'doctor'])
+            ->whereBetween('appointment_date', [Carbon::now()->subDays(7), Carbon::now()])
+            ->orderBy('appointment_date', 'desc')
+            ->limit(5)
+            ->get();
+    }
+
+    /**
+     * Get pending insurance requests
+     */
+    public function getPendingInsuranceRequests()
+    {
+        return InsuranceRequest::with(['appointment.patient', 'insuranceCompany'])
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+    }
+
+    /**
+     * Get overdue bills
+     */
+    public function getOverdueBills()
+    {
+        return Bill::with('patient')
+            ->where('due_date', '<', Carbon::now())
+            ->whereIn('status', ['pending', 'partial'])
+            ->orderBy('due_date', 'asc')
+            ->limit(5)
+            ->get();
     }
 
     /**
@@ -149,6 +191,10 @@ class ReceptionistDashboard extends Component
     {
         return view('livewire.dashboards.receptionist-dashboard', [
             'metrics' => $this->getMetrics(),
+            'todayAppointments' => $this->getTodayAppointments(),
+            'recentAppointments' => $this->getRecentAppointments(),
+            'pendingInsuranceRequests' => $this->getPendingInsuranceRequests(),
+            'overdueBills' => $this->getOverdueBills(),
             'chartData' => $this->getChartData(),
         ]);
     }

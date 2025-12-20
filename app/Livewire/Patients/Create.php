@@ -130,7 +130,7 @@ class Create extends Component
             // Redirect to patient list
             return redirect()->route('patients.index');
         } catch (\Exception $e) {
-            dd($e->getMessage());
+
             // Flash error message
             session()->flash('message', 'Failed to create patient: ' . $e->getMessage());
             session()->flash('type', 'error');

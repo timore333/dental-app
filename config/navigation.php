@@ -35,8 +35,13 @@ return [
             'icon' => '📅',
             'label' => 'Appointments',
             'route' => 'appointments.index',
-            'sub' => false,
+            'sub' => true,
             'active' => 'appointments.*',
+            'sub-items' => [
+                ['label' => 'appointments', 'route' => 'appointments.index'],
+                ['label' => 'calendar', 'route' => 'appointments.calendar'],
+
+            ],
         ],
 
         [

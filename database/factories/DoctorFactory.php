@@ -14,6 +14,7 @@ class DoctorFactory extends Factory
     {
         return [
             'user_id' => User::where('role', 'doctor')->inRandomOrder()->first()?->id ?? 1,
+             'name' => fake()->name(),
             'license_number' => $this->faker->unique()->numerify('DL-###-###'),
             'specialization' => $this->faker->randomElement([
                 'General Dentistry',

@@ -62,6 +62,7 @@ class DoctorSeeder extends Seeder
                 [
                     'license_number' => $doctorData['license_number'],
                     'specialization' => $doctorData['specialization'],
+                    'name' => $doctorData['name'],
                     'phone' => $doctorData['phone'],
                     'bio' => $doctorData['bio'],
                     'is_active' => true,

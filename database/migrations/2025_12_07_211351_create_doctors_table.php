@@ -12,7 +12,7 @@ return new class extends Migration {
 
             // Link to user account
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
-            $table->string('name')->nullable();
+            $table->string('name');
             // Professional information
             $table->string('license_number')->unique()->nullable();
             $table->string('specialization');

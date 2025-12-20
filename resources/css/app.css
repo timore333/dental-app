@@ -1,67 +1,70 @@
-/* Soft-UI Theme CSS */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
-
-/* Global Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import "tailwindcss";
+.fc {
+    font-family: inherit;
 }
 
-body {
-  font-family: 'Open Sans', sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #32325d;
-  background-color: #f7fafc;
+.fc-button-primary {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
 }
 
-body.dark-mode {
-  background-color: #1a202c;
-  color: #e2e8f0;
+.fc-button-primary:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
 }
 
-:root {
-  --primary-color: #2dce89;
-  --secondary-color: #3b5998;
-  --danger-color: #f5365c;
-  --warning-color: #fb6340;
-  --info-color: #11cdef;
-  --light-color: #f8f9fe;
-  --dark-color: #32325d;
+.fc-button-primary.fc-button-active {
+    background-color: #1e40af;
+    border-color: #1e40af;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .fc {
+        background-color: #1f2937;
+        color: #f3f4f6;
+    }
+
+    .fc .fc-button-primary:not(:disabled).fc-button-active {
+        background-color: #1e40af;
+    }
+
+    .fc-theme-standard .fc-col-header-cell {
+        background-color: #111827;
+    }
+
+    .fc-theme-standard .fc-daygrid-body .fc-daygrid-day {
+        background-color: #1f2937;
+    }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+
+
+/**
+    The lines above are intact.
+    The lines below were added by maryUI installer.
+*/
+
+/** daisyUI */
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
-  border-radius: 4px;
+/* maryUI */
+@source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";
+
+/* Theme toggle */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/**
+* Paginator - Traditional style
+* Because Laravel defaults does not match well the design of daisyUI.
+*/
+
+.mary-table-pagination span[aria-current="page"] > span {
+    @apply bg-primary text-base-100
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
-}
-
-@media print {
-  body {
-    background-color: white;
-  }
-
-  .sidebar,
-  .navbar,
-  .footer {
-    display: none !important;
-  }
-
-  .content {
-    margin: 0;
-    padding: 0;
-  }
+.mary-table-pagination button {
+    @apply cursor-pointer
 }

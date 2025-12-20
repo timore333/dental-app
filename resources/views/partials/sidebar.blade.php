@@ -48,6 +48,7 @@
                     @php
                         $navigationConfig = config('navigation');
                        $userRole = strtolower(auth()->user()?->role?->name) ?? 'admin';
+
                       $menuItems = collect($navigationConfig)->get($userRole, []);
                     @endphp
 
