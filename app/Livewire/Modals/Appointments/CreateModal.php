@@ -67,7 +67,7 @@ class CreateModal extends LivewireModal
         return (new StoreAppointmentRequest())->rules();
     }
 
-     protected function messages(): array
+    protected function messages(): array
     {
         return (new StoreAppointmentRequest())->messages();
     }
@@ -93,12 +93,13 @@ class CreateModal extends LivewireModal
         try {
 
             // Create appointment
-           $appointment = $this->appointmentService->create($validated);
+            $appointment = $this->appointmentService->create($validated);
 
             // Dispatch event for SMS/email
             event(new \App\Events\AppointmentCreated($appointment));
 
-            $this->dispatch('notify', message: __('dental.appointment_created'), type: 'success');
+            $this->dispatch('appointmentCreated');
+            $this->dispatch('notify', message: __('Appointment created'), type: 'success');
             $this->closeModal();
 
         } catch (ValidationException $e) {

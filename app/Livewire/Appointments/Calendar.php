@@ -83,8 +83,8 @@ class Calendar extends Component
             return [
                 'id' => (string)$appointment->id,
                 'title' => $appointment->patient?->getName(),
-                'start' => $appointment->start,
-                'end' => $appointment->end,
+                'start' => $appointment->start->format('Y-m-d\TH:i:s'),
+                'end' => $appointment->end->format('Y-m-d\TH:i:s'),
                 'classNames' => ['nice-event'],
                 'backgroundColor' => $this->getStatusColor($appointment->status),
                 'borderColor' => $this->getStatusBorderColor($appointment->status),
@@ -97,7 +97,7 @@ class Calendar extends Component
                     'notes' => $appointment->notes,
                     'phone' => $appointment->patient?->phone,
                     'file_number' => $appointment->patient?->file_number ?? null,
-                    'time' => date('h:i A', strtotime($appointment->appointment_date)),
+                    'time' => date('h:i A', strtotime($appointment->start)),
                 ],
             ];
         })->toArray();
@@ -140,9 +140,10 @@ class Calendar extends Component
     }
 
     #[On('appointmentCreated')]
+    #[On('appointmentUpdated')]
     public function refreshCalendar(string $dateStr): void
     {
-        $this->dispatch('notify', 'Appointment Created',  'success');
+         $this->loadAppointments();
     }
 
     #[On('eventClick')]
@@ -176,6 +177,7 @@ class Calendar extends Component
             $this->isProcessing = false;
         }
     }
+
 
     /**
      * Filter methods

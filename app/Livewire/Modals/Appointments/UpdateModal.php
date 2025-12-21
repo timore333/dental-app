@@ -96,6 +96,8 @@ class UpdateModal extends LivewireModal
 
             $appointmentService = app(AppointmentService::class);
             $appointmentService->update($this->appointment, $validated);
+            // Dispatch event to refresh calendar
+            $this->dispatch('appointmentUpdated');
 
             $this->dispatch('notify', message: __('dental.appointment_updated'), type: 'success');
             $this->closeModal();
