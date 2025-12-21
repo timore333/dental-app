@@ -2,17 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Visit extends Model
 {
-    use HasFactory, SoftDeletes;
-
     protected $fillable = [
         'appointment_id',
         'patient_id',
@@ -21,6 +17,7 @@ class Visit extends Model
         'chief_complaint',
         'diagnosis',
         'treatment_notes',
+        'created_by',
     ];
 
     protected $casts = [
@@ -29,33 +26,21 @@ class Visit extends Model
 
     // ==================== RELATIONSHIPS ====================
 
-    /**
-     * Associated appointment (if visit was from appointment)
-     */
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class)->withDefault();
     }
 
-    /**
-     * The patient
-     */
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
     }
 
-    /**
-     * The doctor who conducted the visit
-     */
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
     }
 
-    /**
-     * All procedures done in this visit
-     */
     public function procedures(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -64,12 +49,9 @@ class Visit extends Model
             'visit_id',
             'procedure_id'
         )->withPivot('price_at_time', 'notes')
-         ->withTimestamps();
+            ->withTimestamps();
     }
 
-    /**
-     * Bill created from this visit (if any)
-     */
     public function bill(): HasOne
     {
         return $this->hasOne(Bill::class);
@@ -78,10 +60,28 @@ class Visit extends Model
     // ==================== METHODS ====================
 
     /**
-     * Add procedure to visit
+     * Add procedure to visit with automatic price calculation
+     * Determines price based on patient type (insurance or cash)
      */
-    public function addProcedure(int $procedureId, float $price): void
+    public function addProcedure(int $procedureId, ?float $customPrice = null): void
     {
+        $procedure = Procedure::find($procedureId);
+
+        if (!$procedure) {
+            throw new \Exception("Procedure not found");
+        }
+
+        // Determine the price
+        if ($customPrice !== null) {
+            $price = $customPrice;
+        } else {
+            $price = $procedure->getPriceForPatient($this->patient);
+        }
+
+        if ($price === null) {
+            throw new \Exception("No price available for this procedure for the patient type");
+        }
+
         $this->procedures()->attach($procedureId, [
             'price_at_time' => $price,
             'created_at' => now(),
@@ -105,5 +105,13 @@ class Visit extends Model
         return $this->procedures()
             ->get()
             ->sum(fn ($p) => $p->pivot->price_at_time) ?? 0;
+    }
+
+    /**
+     * Get procedures count
+     */
+    public function getProceduresCount(): int
+    {
+        return $this->procedures()->count();
     }
 }

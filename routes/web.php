@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 // ============================================================
 
 Route::get('/test', function () {
-    return view('dashboard-template');
+    return \App\Models\Visit::get();
 });
 
 

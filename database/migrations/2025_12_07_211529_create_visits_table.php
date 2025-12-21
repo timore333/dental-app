@@ -26,6 +26,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+               // Audit fields
+            $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
+
             // Indexes
             $table->index('patient_id');
             $table->index('doctor_id');

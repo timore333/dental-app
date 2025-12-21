@@ -1,5 +1,8 @@
 <?php
+
 namespace App\Livewire\Visits;
+
+use App\Events\VisitRecorded;
 use App\Models\Appointment;
 use App\Models\Doctor;
 use App\Models\Patient;
@@ -11,19 +14,17 @@ use Livewire\Component;
 
 class VisitRecording extends Component
 {
-    public $visit;
-    public $patient;
-    public $doctor;
+    public $appointmentId;
+    public Patient $patient;
+    public Doctor $doctor;
     public $visitDate;
     public $chiefComplaint = '';
     public $diagnosis = '';
     public $treatmentNotes = '';
-    public $procedures = [];
-    public $selectedProcedure = '';
-    public $procedurePrice = '';
-    public $showProcedureModal = false;
-    public $tab = 'info';
-    public $appointmentId = null;
+
+    public $procedurePrice = null;
+    public $selectedProcedure = null;
+    public $selectedProcedures = [];
 
     protected $rules = [
         'patient' => 'required',
@@ -32,7 +33,7 @@ class VisitRecording extends Component
         'chiefComplaint' => 'required|string|max:1000',
         'diagnosis' => 'nullable|string|max:1000',
         'treatmentNotes' => 'nullable|string|max:1000',
-        'procedures' => 'array|min:0',
+        'selectedProcedures' => 'array|min:1',
     ];
 
     public function mount($appointmentId = null)
@@ -48,62 +49,91 @@ class VisitRecording extends Component
         }
     }
 
-    public function render()
-    {
-        return view('livewire.visits.visit-recording', [
-            'procedures' => Procedure::orderBy('name')->get(),
-        ]);
-    }
-
-    public function selectProcedure()
+    /**
+     * When procedure is selected, get the appropriate price
+     * based on patient type (insurance or cash)
+     */
+    #[\Livewire\Attributes\On('update:selectedProcedure')]
+    public function prepareSelectProcedure()
     {
         if ($this->selectedProcedure) {
             $procedure = Procedure::find($this->selectedProcedure);
+
             if ($procedure) {
-                $this->procedurePrice = $procedure->price;
+                $price = $procedure->getPriceForPatient($this->patient);
+
+                if ($price !== null) {
+                    $this->procedurePrice = $price;
+                } else {
+                    $this->dispatch('notify', __('No price available for this procedure for patient type'));
+                    $this->reset('selectedProcedure');
+                }
             }
         }
     }
 
+    /**
+     * Add selected procedure to procedures list
+     */
     public function addProcedure()
     {
-        if (!$this->selectedProcedure || !$this->procedurePrice) {
-            $this->addError('selectedProcedure', __('Please select a procedure'));
+        if (!$this->selectedProcedure) {
+            $this->dispatch('notify', __('Please select a procedure'));
             return;
         }
 
         $procedure = Procedure::find($this->selectedProcedure);
-        $this->procedures[] = [
+
+        if (!$procedure || $this->procedurePrice === null) {
+
+            $this->dispatch('notify', __('Please select a procedure with valid price'));
+            return;
+        }
+
+        $this->selectedProcedures[] = [
             'procedure_id' => $procedure->id,
             'name' => $procedure->name,
             'code' => $procedure->code,
             'price' => floatval($this->procedurePrice),
         ];
 
-        $this->selectedProcedure = '';
-        $this->procedurePrice = '';
-        $this->showProcedureModal = false;
+        $this->reset('selectedProcedure', 'procedurePrice');
+//        dump($this->selectedProcedures);
     }
 
+    /**
+     * Remove procedure from list
+     */
     public function removeProcedure($index)
     {
-        unset($this->procedures[$index]);
-        $this->procedures = array_values($this->procedures);
+        unset($this->selectedProcedures[$index]);
+        $this->selectedProcedures = array_values($this->selectedProcedures);
     }
 
+    /**
+     * Calculate total price of all procedures
+     */
     public function calculateTotal()
     {
-        return array_sum(array_column($this->procedures, 'price'));
+        if (empty($this->selectedProcedures)) {
+            return 0;
+        }
+
+        return array_sum(array_column($this->selectedProcedures, 'price'));
     }
 
+    /**
+     * Submit visit recording
+     */
     public function submitVisit()
     {
-        $this->validate();
+//        $this->validate();
 
-        if (empty($this->procedures)) {
-            $this->addError('procedures', __('Add at least one procedure'));
+        if (empty($this->selectedProcedures)) {
+            $this->dispatch('notify', __('Add at least one procedure'));
             return;
         }
+
 
         try {
             $visitData = [
@@ -120,17 +150,28 @@ class VisitRecording extends Component
             $visitService = new VisitService();
             $visit = $visitService->createVisit($visitData);
 
-            foreach ($this->procedures as $procedure) {
-                $visitService->addProcedureToVisit($visit, $procedure['procedure_id'], $procedure['price']);
+            foreach ($this->selectedProcedures as $procedure) {
+                $visitService->addProcedureToVisit(
+                    $visit,
+                    $procedure['procedure_id'],
+                    $procedure['price']
+                );
             }
-
-            event(new \App\Events\VisitRecorded($visit));
+            dump($visit);
+            event(new VisitRecorded($visit));
 
             $this->dispatch('notify', type: 'success', message: __('Visit recorded and bill created'));
-            redirect()->route('billing.cash', ['bill_id' => $visit->bill?->id]);
+            redirect()->route('visits.show', ['id' => $visit->id]);
+
         } catch (\Exception $e) {
-            $this->addError('general', __('Error recording visit'));
+            dump($e->getMessage());
+            $this->addError('general', __('Error recording visit: ' . $e->getMessage()));
         }
     }
+
+    public function render()
+    {
+        $procedures = Procedure::active()->orderBy('name')->get();
+        return view('livewire.visits.visit-recording', ['procedures' => $procedures]);
+    }
 }
-?>

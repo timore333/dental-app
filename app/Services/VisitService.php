@@ -23,7 +23,7 @@ class VisitService
 
     public function addProcedureToVisit($visit, $procedureId, $price)
     {
-        return $visit->procedures()->attach($procedureId, ['price' => $price]);
+        return $visit->procedures()->attach($procedureId, ['price_at_time' => $price]);
     }
 
     public function removeProcedureFromVisit($visit, $procedureId)

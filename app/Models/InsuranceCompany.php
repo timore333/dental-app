@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -13,19 +11,15 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class InsuranceCompany extends Model
 {
-    use HasFactory, SoftDeletes;
-
     protected $fillable = [
+        'code',
         'name',
-        'registration_number',
         'phone',
         'email',
-        'contact_person',
         'address',
-        'city',
+        'contact_person',
+        'notes',
         'is_active',
-        'created_by',
-        'updated_by',
     ];
 
     protected $casts = [
@@ -34,49 +28,31 @@ class InsuranceCompany extends Model
 
     // ==================== RELATIONSHIPS ====================
 
-    /**
-     * All patients with this insurance
-     */
     public function patients(): HasMany
     {
         return $this->hasMany(Patient::class);
     }
 
-    /**
-     * Price list for procedures
-     */
     public function priceLists(): HasMany
     {
         return $this->hasMany(InsuranceCompanyPriceList::class);
     }
 
-    /**
-     * All insurance requests from this company
-     */
     public function insuranceRequests(): HasMany
     {
         return $this->hasMany(InsuranceRequest::class);
     }
 
-    /**
-     * All insurance approvals through requests
-     */
     public function approvals(): HasManyThrough
     {
         return $this->hasManyThrough(InsuranceApproval::class, InsuranceRequest::class);
     }
 
-    /**
-     * All documents - polymorphic
-     */
     public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
     }
 
-    /**
-     * Insurance company's financial account - polymorphic
-     */
     public function account(): MorphOne
     {
         return $this->morphOne(Account::class, 'accountable');
@@ -84,9 +60,6 @@ class InsuranceCompany extends Model
 
     // ==================== SCOPES ====================
 
-    /**
-     * Get only active insurance companies
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -116,5 +89,13 @@ class InsuranceCompany extends Model
                 $item->procedure->code => $item->price
             ])
             ->toArray();
+    }
+
+    /**
+     * Check if this company has a price for a procedure
+     */
+    public function hasPriceForProcedure(int $procedureId): bool
+    {
+        return $this->getPriceForProcedure($procedureId) !== null;
     }
 }

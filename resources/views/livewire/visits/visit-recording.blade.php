@@ -6,9 +6,9 @@
         <div class="card">
             <h2 class="text-lg font-bold mb-4">{{ __('Patient Info') }}</h2>
             <div class="grid grid-cols-3 gap-4">
-                <div><span class="label">{{ __('Name') }}</span><p>{{ $patient->name ?? '' }}</p></div>
-                <div><span class="label">{{ __('File') }}</span><p>{{ $patient->file_number ?? '' }}</p></div>
-                <div><span class="label">{{ __('Age') }}</span><p>{{ $patient->age ?? '' }}</p></div>
+                <div><span class="label">{{ __('Name') }}</span><p>{{ $patient->getName() ?? '' }}</p></div>
+                <div><span class="label">{{ __('File number') }}</span><p>{{ $patient->file_number ?? $patient->id}}</p></div>
+                <div><span class="label">{{ __('Age') }}</span><p>{{ age($patient->date_of_birth) ?? '' }}</p></div>
             </div>
         </div>
 
@@ -36,7 +36,7 @@
             <h2 class="text-lg font-bold mb-4">{{ __('Procedures') }}</h2>
             <div class="space-y-4">
                 <div class="flex gap-2">
-                    <select wire:model="selectedProcedure" wire:change="selectProcedure" class="form-input flex-1">
+                    <select wire:model="selectedProcedure"  wire:change="prepareSelectProcedure" class="form-input flex-1">
                         <option value="">{{ __('Select Procedure') }}</option>
                         @foreach($procedures as $proc)
                             <option value="{{ $proc->id }}">{{ $proc->name }} - {{ $proc->price }}</option>
@@ -45,7 +45,7 @@
                     <button type="button" wire:click="addProcedure" class="btn btn-primary">{{ __('Add') }}</button>
                 </div>
 
-                @if(!empty($procedures))
+                @if(!empty($selectedProcedures))
                     <table class="w-full">
                         <thead>
                             <tr class="border-b">
@@ -55,7 +55,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($procedures as $index => $proc)
+                            @foreach($selectedProcedures as $index => $proc)
                                 <tr class="border-b">
                                     <td class="py-2">{{ $proc['name'] }}</td>
                                     <td class="py-2">{{ $proc['price'] }}</td>

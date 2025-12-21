@@ -366,7 +366,8 @@ class Patient extends Model
     }
 
     public function getName(){
-        return $this->first_name .' '. $this->middle_name .' '. $this->last_name;
+        $middleName = $this->middle_name ?? '';
+        return $this->first_name .' '. $middleName .' '. $this->last_name;
     }
 
     // ==================== EVENTS ====================
@@ -384,5 +385,10 @@ class Patient extends Model
         static::updating(function ($patient) {
             $patient->updated_by = auth()->id() ?? 1;
         });
+    }
+
+    public function getNameAttribute()
+    {
+        return $this->getName();
     }
 }
