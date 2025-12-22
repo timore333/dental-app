@@ -36,7 +36,7 @@
             <h2 class="text-lg font-bold mb-4">{{ __('Procedures') }}</h2>
             <div class="space-y-4">
                 <div class="flex gap-2">
-                    <select wire:model="selectedProcedure"  wire:change="prepareSelectProcedure" class="form-input flex-1">
+                    <select wire:model="selectedProcedure"  class="form-input flex-1">
                         <option value="">{{ __('Select Procedure') }}</option>
                         @foreach($procedures as $proc)
                             <option value="{{ $proc->id }}">{{ $proc->name }} - {{ $proc->price }}</option>

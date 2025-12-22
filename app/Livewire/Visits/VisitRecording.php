@@ -53,23 +53,32 @@ class VisitRecording extends Component
      * When procedure is selected, get the appropriate price
      * based on patient type (insurance or cash)
      */
-    #[\Livewire\Attributes\On('update:selectedProcedure')]
-    public function prepareSelectProcedure()
+//    #[\Livewire\Attributes\On('update:selectedProcedure')]
+    public function updatedSelectedProcedure($value)
     {
-        if ($this->selectedProcedure) {
-            $procedure = Procedure::find($this->selectedProcedure);
+        $this->procedurePrice = null;
 
-            if ($procedure) {
-                $price = $procedure->getPriceForPatient($this->patient);
-
-                if ($price !== null) {
-                    $this->procedurePrice = $price;
-                } else {
-                    $this->dispatch('notify', __('No price available for this procedure for patient type'));
-                    $this->reset('selectedProcedure');
-                }
-            }
+        if (!$value) {
+            return;
         }
+
+        $procedure = Procedure::find($value);
+
+        if (!$procedure) {
+            $this->dispatch('notify', __('Selected procedure not found'));
+            $this->reset('selectedProcedure');
+            return;
+        }
+
+        $price = $procedure->getPriceForPatient($this->patient);
+
+        if ($price === null) {
+            $this->dispatch('notify', __('No price available for this procedure for patient type'));
+            $this->reset('selectedProcedure');
+            return;
+        }
+
+        $this->procedurePrice = (float) $price;
     }
 
     /**
@@ -98,7 +107,7 @@ class VisitRecording extends Component
         ];
 
         $this->reset('selectedProcedure', 'procedurePrice');
-//        dump($this->selectedProcedures);
+
     }
 
     /**
@@ -157,7 +166,7 @@ class VisitRecording extends Component
                     $procedure['price']
                 );
             }
-            dump($visit);
+
             event(new VisitRecorded($visit));
 
             $this->dispatch('notify', type: 'success', message: __('Visit recorded and bill created'));

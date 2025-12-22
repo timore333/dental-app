@@ -141,7 +141,7 @@ class Calendar extends Component
 
     #[On('appointmentCreated')]
     #[On('appointmentUpdated')]
-    public function refreshCalendar(string $dateStr): void
+    public function refreshCalendar(): void
     {
          $this->loadAppointments();
     }
@@ -159,7 +159,7 @@ class Calendar extends Component
     }
 
     #[On('eventDrop')]
-    public function handleEventDrop(int $appointmentId, string $newStart): void
+    public function handleEventDrop($appointmentId, $newStart): void
     {
         if ($this->isProcessing) return;
         $this->isProcessing = true;

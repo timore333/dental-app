@@ -12,7 +12,7 @@ class Procedure extends Model
         'name',
         'description',
         'category',
-        'price',
+        'default_price',
         'is_active',
     ];
 

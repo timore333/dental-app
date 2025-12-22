@@ -27,6 +27,7 @@ class BillService
             'bill_number' => Bill::generateBillNumber(),
             'patient_id' => $visit->patient_id,
             'doctor_id' => $visit->doctor_id,
+            'visit_id' => $visit->id,
             'bill_date' => now(),
             'type' => $visit->patient->type,
             'insurance_company_id' => $visit->patient->insurance_company_id,

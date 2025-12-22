@@ -37,6 +37,7 @@ return new class extends Migration
 
             // Audit fields
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('visit_id')->nullable()->constrained('visits')->cascadeOnDelete();
 
             // Timestamps
             $table->timestamps();

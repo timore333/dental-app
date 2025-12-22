@@ -162,13 +162,6 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
         // Appointment Calendar
         Route::get('/calendar', \App\Livewire\Appointments\Calendar::class)->name('calendar');
 
-        // API Routes for Calendar
-//        Route::prefix('api')->group(function () {
-//            Route::get('/calendar/events', [\App\Http\Controllers\Api\CalendarController::class, 'getEvents'])->name('api.calendar.events');
-//            Route::post('/calendar/{appointment}/reschedule', [\App\Http\Controllers\Api\CalendarController::class, 'reschedule'])->name('api.calendar.reschedule');
-//        });
-
-
     });
 
     // ============================================================
@@ -208,7 +201,8 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
     // ============================================================
 
     Route::prefix('procedures')->name('procedures.')->group(function () {
-        Route::get('/', fn() => view('procedures.index'))->name('index');
+        Route::get('/', App\Livewire\Procedures\Index::class)->name('index');
+        Route::get('/create', App\Livewire\Procedures\Create::class)->name('create');
     });
 
     // ============================================================
