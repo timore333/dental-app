@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 
+
 if (!function_exists('dateForHumans')) {
     /**
      * Format date to human readable format
@@ -95,4 +96,26 @@ if (!function_exists('timeFromDate')) {
             return null;
         }
     }
+
+    if (!function_exists('formatCurrency')) {
+    /**
+     * Format value as currency
+     */
+    function formatCurrency(
+        float|int|null $value,
+        string $currency = 'EGP',
+        string $locale = 'en_US',
+        int $decimals = 2
+    ): string {
+        if ($value === null || !is_numeric($value)) {
+            return '';
+        }
+
+        $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+        $formatter->setAttribute(\NumberFormatter::FRACTION_DIGITS, $decimals);
+
+        return $formatter->formatCurrency($value, $currency);
+    }
+}
+
 }

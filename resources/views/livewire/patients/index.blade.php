@@ -193,7 +193,7 @@
                                 <td class="flex items-center p-4 mr-12 space-x-6 whitespace-nowrap lg:p-5 lg:mr-0">
 
                                     <div class="text-sm font-normal text-gray-500">
-                                        <div class="text-base font-semibold text-gray-900">{{$patient->getName()}}</div>
+                                        <div class="text-base font-semibold text-gray-900"><a href="{{route('patients.show', $patient->id)}}">{{$patient->getName()}}</a></div>
                                     </div>
                                 </td>
 

@@ -6,48 +6,23 @@ use App\Models\Appointment;
 use App\Models\Bill;
 use App\Models\InsuranceRequest;
 use App\Models\Patient;
+use App\Models\Payment;
+use App\Traits\hasDateRange;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
+#[Title('Receptionist Dashboard')]
 class ReceptionistDashboard extends Component
 {
-    public string $dateRange = '30days';
-    public $fromDate;
-    public $toDate;
-
+use hasDateRange;
     public function mount(): void
     {
         $this->setDateRange('30days');
     }
 
-    /**
-     * Set the date range for metrics
-     */
-    public function setDateRange(string $range = '30days'): void
-    {
-        $this->dateRange = $range;
-        $today = Carbon::now();
 
-        match ($range) {
-            '7days' => [
-                $this->fromDate = $today->copy()->subDays(7)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-            '90days' => [
-                $this->fromDate = $today->copy()->subDays(90)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-            'yearly' => [
-                $this->fromDate = $today->copy()->startOfYear(),
-                $this->toDate = $today->endOfYear(),
-            ],
-            default => [
-                $this->fromDate = $today->copy()->subDays(30)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-        };
-    }
 
     /**
      * Get receptionist dashboard metrics
@@ -56,21 +31,17 @@ class ReceptionistDashboard extends Component
     {
         return [
             'total_patients' => Patient::count(),
-            'appointments_today' => Appointment::whereDate('appointment_date', Carbon::today())
-                ->count(),
-            'revenue_month' => Bill::whereMonth('created_at', Carbon::now()->month)
+            'appointments_today' => Appointment::whereDate('start', Carbon::today())->count(),
+            'revenue_month' => Payment::whereMonth('created_at', Carbon::now()->month)
                 ->whereYear('created_at', Carbon::now()->year)
-                ->where('status', 'paid')
-                ->sum('total_amount'),
-            'pending_payments' => Bill::where('status', 'pending')
-                ->orWhere('status', 'partial')
+                ->sum('amount'),
+            'pending_payments' => Bill::where('total_amount', '>', 0)->count(),
+            'total_appointments' => Appointment::whereBetween('start', [$this->fromDate, $this->toDate])
                 ->count(),
-            'total_appointments' => Appointment::whereBetween('appointment_date', [$this->fromDate, $this->toDate])
-                ->count(),
-            'scheduled_appointments' => Appointment::whereDate('appointment_date', '>=', Carbon::today())
+            'scheduled_appointments' => Appointment::whereDate('start', '>=', Carbon::today())
                 ->where('status', 'scheduled')
                 ->count(),
-            'completed_appointments' => Appointment::whereBetween('appointment_date', [$this->fromDate, $this->toDate])
+            'completed_appointments' => Appointment::whereBetween('start', [$this->fromDate, $this->toDate])
                 ->where('status', 'completed')
                 ->count(),
             'new_patients' => Patient::whereBetween('created_at', [$this->fromDate, $this->toDate])
@@ -78,6 +49,8 @@ class ReceptionistDashboard extends Component
             'pending_insurance_requests' => InsuranceRequest::where('status', 'pending')
                 ->count(),
             'pending_appointments' => Appointment::where('status', 'pending')
+                ->count(),
+            'total_payments_today' => Payment::whereDate('created_at', Carbon::today())
                 ->count(),
         ];
     }
@@ -88,8 +61,8 @@ class ReceptionistDashboard extends Component
     public function getTodayAppointments()
     {
         return Appointment::with(['patient', 'doctor'])
-            ->whereDate('appointment_date', Carbon::today())
-            ->orderBy('appointment_date', 'asc')
+            ->whereDate('start', Carbon::today())
+            ->orderBy('start', 'asc')
             ->limit(10)
             ->get();
     }
@@ -100,8 +73,8 @@ class ReceptionistDashboard extends Component
     public function getRecentAppointments()
     {
         return Appointment::with(['patient', 'doctor'])
-            ->whereBetween('appointment_date', [Carbon::now()->subDays(7), Carbon::now()])
-            ->orderBy('appointment_date', 'desc')
+            ->whereBetween('start', [Carbon::now()->subDays(7), Carbon::now()])
+            ->orderBy('start', 'desc')
             ->limit(5)
             ->get();
     }
@@ -125,8 +98,20 @@ class ReceptionistDashboard extends Component
     {
         return Bill::with('patient')
             ->where('due_date', '<', Carbon::now())
-            ->whereIn('status', ['pending', 'partial'])
+            ->where('total_amount', '>', 0)
             ->orderBy('due_date', 'asc')
+            ->limit(5)
+            ->get();
+    }
+
+    /**
+     * Get recent payments
+     */
+    public function getRecentPayments()
+    {
+        return Payment::with(['bill.patient'])
+            ->whereBetween('created_at', [$this->fromDate, $this->toDate])
+            ->orderByDesc('created_at')
             ->limit(5)
             ->get();
     }
@@ -137,7 +122,7 @@ class ReceptionistDashboard extends Component
     public function getChartData(): array
     {
         // Appointment Status Chart
-        $appointmentStatus = Appointment::whereBetween('appointment_date', [$this->fromDate, $this->toDate])
+        $appointmentStatus = Appointment::whereBetween('start', [$this->fromDate, $this->toDate])
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status');
@@ -152,7 +137,7 @@ class ReceptionistDashboard extends Component
         // Appointments by Doctor
         $appointmentsByDoctor = DB::table('appointments')
             ->join('users', 'appointments.doctor_id', '=', 'users.id')
-            ->whereBetween('appointments.appointment_date', [$this->fromDate, $this->toDate])
+            ->whereBetween('appointments.start', [$this->fromDate, $this->toDate])
             ->selectRaw('users.name, COUNT(*) as count')
             ->groupBy('users.id', 'users.name')
             ->orderByDesc('count')
@@ -163,6 +148,12 @@ class ReceptionistDashboard extends Component
         $insuranceStatus = InsuranceRequest::selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status');
+
+        // Payment methods used
+        $paymentMethods = Payment::whereBetween('created_at', [$this->fromDate, $this->toDate])
+            ->selectRaw('payment_method, SUM(amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
 
         return [
             'appointmentStatus' => [
@@ -181,6 +172,10 @@ class ReceptionistDashboard extends Component
                 'labels' => array_keys($insuranceStatus->toArray()),
                 'data' => array_values($insuranceStatus->toArray()),
             ],
+            'paymentMethods' => [
+                'labels' => array_keys($paymentMethods->toArray()),
+                'data' => array_values($paymentMethods->toArray()),
+            ],
         ];
     }
 
@@ -195,6 +190,7 @@ class ReceptionistDashboard extends Component
             'recentAppointments' => $this->getRecentAppointments(),
             'pendingInsuranceRequests' => $this->getPendingInsuranceRequests(),
             'overdueBills' => $this->getOverdueBills(),
+            'recentPayments' => $this->getRecentPayments(),
             'chartData' => $this->getChartData(),
         ]);
     }

@@ -3,53 +3,24 @@
 namespace App\Livewire\Dashboards;
 
 use App\Models\Appointment;
+use App\Models\Payment;
 use App\Models\Visit;
-use Illuminate\Support\Facades\DB;
-use Livewire\Component;
+use App\Traits\hasDateRange;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
+use Livewire\Component;
 
+#[Title('Doctor Dashboard')]
 class DoctorDashboard extends Component
 {
-    public string $dateRange = '30days';
-    public ?\DateTime $fromDate = null;
-    public ?\DateTime $toDate = null;
+    use hasDateRange;
 
     public function mount(): void
     {
         $this->setDateRange('30days');
     }
 
-    /**
-     * Set the date range for metrics
-     */
-    public function setDateRange(string $range): void
-    {
-        $this->dateRange = $range;
-        $today = Carbon::now();
-
-        match($range) {
-            '7days' => [
-                $this->fromDate = $today->copy()->subDays(7)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-            '30days' => [
-                $this->fromDate = $today->copy()->subDays(30)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-            '90days' => [
-                $this->fromDate = $today->copy()->subDays(90)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-            'yearly' => [
-                $this->fromDate = $today->copy()->startOfYear(),
-                $this->toDate = $today->endOfYear(),
-            ],
-            default => [
-                $this->fromDate = $today->copy()->subDays(30)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-        };
-    }
 
     /**
      * Get doctor dashboard metrics
@@ -59,31 +30,22 @@ class DoctorDashboard extends Component
         $doctor = auth()->user();
 
         return [
-            // ✅ FIXED: Appointments for logged-in doctor only
             'total_appointments' => Appointment::where('doctor_id', $doctor->id)
-                ->whereBetween('appointment_date', [$this->fromDate, $this->toDate])
+                ->whereBetween('start', [$this->fromDate, $this->toDate])
                 ->count(),
-
-            // ✅ FIXED: Completed appointments for logged-in doctor
             'completed_appointments' => Appointment::where('doctor_id', $doctor->id)
-                ->whereBetween('appointment_date', [$this->fromDate, $this->toDate])
+                ->whereBetween('start', [$this->fromDate, $this->toDate])
                 ->where('status', 'completed')
                 ->count(),
-
-            // ✅ FIXED: Visits recorded by logged-in doctor
             'total_visits' => Visit::where('doctor_id', $doctor->id)
                 ->whereBetween('created_at', [$this->fromDate, $this->toDate])
                 ->count(),
-
-            // ✅ FIXED: Total earnings from payments (simplified - sum all payments in range)
-            // NOTE: If you need doctor-specific earnings, add a doctor_id column to payments table
-            'total_earnings' => DB::table('payments')
-                ->whereBetween('created_at', [$this->fromDate, $this->toDate])
-                ->sum('amount') ?? 0,
-
-            // ✅ FIXED: Pending appointments for logged-in doctor
+            'total_earnings' => Payment::whereBetween('created_at', [$this->fromDate, $this->toDate])
+                    ->sum('amount') ?? 0,
             'pending_appointments' => Appointment::where('doctor_id', $doctor->id)
                 ->where('status', 'pending')
+                ->count(),
+            'total_payment_count' => Payment::whereBetween('created_at', [$this->fromDate, $this->toDate])
                 ->count(),
         ];
     }
@@ -97,14 +59,13 @@ class DoctorDashboard extends Component
 
         // Appointment Status Chart
         $appointmentStatus = Appointment::where('doctor_id', $doctor->id)
-            ->whereBetween('appointment_date', [$this->fromDate, $this->toDate])
+            ->whereBetween('start', [$this->fromDate, $this->toDate])
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status');
 
-        // ✅ FIXED: Payment method distribution (all payments)
-        $earningsByMethod = DB::table('payments')
-            ->whereBetween('created_at', [$this->fromDate, $this->toDate])
+        // Payment method distribution
+        $earningsByMethod = Payment::whereBetween('created_at', [$this->fromDate, $this->toDate])
             ->selectRaw('payment_method, SUM(amount) as total')
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
@@ -123,8 +84,8 @@ class DoctorDashboard extends Component
 
         // Appointments Over Time
         $appointmentsOverTime = Appointment::where('doctor_id', $doctor->id)
-            ->whereBetween('appointment_date', [$this->fromDate, $this->toDate])
-            ->selectRaw('DATE(appointment_date) as date, COUNT(*) as count')
+            ->whereBetween('start', [$this->fromDate, $this->toDate])
+            ->selectRaw('DATE(start) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('count', 'date');

@@ -25,7 +25,7 @@ return new class extends Migration
             $table->enum('type', ['cash', 'insurance'])->default('cash');
 
             // Amounts
-            $table->decimal('total_amount', 10, 2);
+            $table->decimal('c', 10, 2);
             $table->decimal('paid_amount', 10, 2)->default(0);
 
             // Status tracking

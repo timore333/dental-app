@@ -147,9 +147,10 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
 
     Route::prefix('patients')->name('patients.')->group(function () {
         Route::get('/', \App\Livewire\Patients\Index::class)->name('index');
+        Route::get('/show/{patient}', \App\Livewire\Patients\Show::class)->name('show');
         Route::get('/create', \App\Livewire\Patients\Create::class)->name('create');
         Route::get('/{patient}/edit', \App\Livewire\Patients\Edit::class)->name('edit');
-           Route::get('/import', \App\Livewire\Patients\PatientImport::class)->name('import');
+        Route::get('/import', \App\Livewire\Patients\PatientImport::class)->name('import');
     });
     // ============================================================
     // PHASE 2-3: APPOINTMENTS ROUTES
@@ -215,9 +216,33 @@ Route::middleware(['auth', 'verified', 'session.timeout', 'log.activity'])->grou
     });
 
     Route::prefix('payments')->name('payments.')->group(function () {
-        Route::get('/', fn() => view('payments.index'))->name('index');
-        Route::get('/create', fn() => view('payments.create'))->name('create');
+        Route::get('/', \App\Livewire\Payments\PaymentHistoryComponent::class)->name('index');
+//        Route::get('/create', fn() => view('payments.create'))->name('create');
+
     });
+
+    //*****************************************
+
+    Route::prefix('payments')->middleware(['auth'])->group(function () {
+        // Payments
+        Route::post('/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('store');
+        Route::get('/{payment}', [\App\Http\Controllers\PaymentController::class, 'show'])->name('show');
+        Route::put('/{payment}', [\App\Http\Controllers\PaymentController::class, 'update'])->name('update');
+        Route::delete('/{payment}', [\App\Http\Controllers\PaymentController::class, 'destroy'])->name('destroy');
+        Route::get('/{payment}/receipt', [\App\Http\Controllers\PaymentController::class, 'receipt'])->name('receipt');
+        Route::post('/{payment}/email-receipt', [\App\Http\Controllers\PaymentController::class, 'emailReceipt'])->name('emailReceipt');
+        Route::get('/{payment}/print', [\App\Http\Controllers\PaymentController::class, 'printReceipt'])->name('print');
+
+    });
+
+    // Advance Credits
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/patients/{patient}/advance-credits', [\App\Http\Controllers\AdvanceCreditController::class, 'index'])->name('advance-credits.index');
+        Route::post('/advance-credits/{credit}/apply', [\App\Http\Controllers\AdvanceCreditController::class, 'apply'])->name('advance-credits.apply');
+        Route::post('/advance-credits/{credit}/refund', [\App\Http\Controllers\AdvanceCreditController::class, 'refund'])->name('advance-credits.refund');
+    });
+    //******************************************
+
 
     // ============================================================
     // PHASE 4: RECEIPTS ROUTES

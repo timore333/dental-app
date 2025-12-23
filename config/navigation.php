@@ -32,9 +32,9 @@ return [
         ],
 
         [
-            'icon' => '📅',
             'label' => 'Appointments',
-            'route' => 'appointments.index',
+            'icon' => 'heroicon-o-user',
+            'route' => 'admin.appointments.index',
             'sub' => true,
             'active' => 'appointments.*',
             'sub-items' => [

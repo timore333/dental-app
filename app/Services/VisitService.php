@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Services;
+
 use App\Models\Visit;
 use App\Models\VisitProcedure;
 
@@ -7,6 +9,7 @@ class VisitService
 {
     public function createVisit($data)
     {
+
         return Visit::create($data);
     }
 
@@ -18,7 +21,7 @@ class VisitService
             'doctor_id' => $appointment->doctor_id,
             'visit_date' => now(),
             'created_by' => auth()->id(),
-        ]);
+          ]);
     }
 
     public function addProcedureToVisit($visit, $procedureId, $price)

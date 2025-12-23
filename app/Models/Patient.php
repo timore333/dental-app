@@ -113,6 +113,17 @@ class Patient extends Model
         return $this->morphOne(Account::class, 'accountable');
     }
 
+    public function advanceCredits(): HasMany
+    {
+        return $this->hasMany(AdvanceCredit::class);
+    }
+
+    //  relationship through bills:
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(Payment::class, Bill::class);
+    }
+
     /**
      * Who created this patient
      */
@@ -365,9 +376,10 @@ class Patient extends Model
         };
     }
 
-    public function getName(){
+    public function getName()
+    {
         $middleName = $this->middle_name ?? '';
-        return $this->first_name .' '. $middleName .' '. $this->last_name;
+        return $this->first_name . ' ' . $middleName . ' ' . $this->last_name;
     }
 
     // ==================== EVENTS ====================
@@ -391,4 +403,34 @@ class Patient extends Model
     {
         return $this->getName();
     }
+
+    // Add these relationships and methods to your existing Patient model
+
+
+    public function getAvanceCreditBalance(): float
+    {
+        return (float)$this->advanceCredits()
+            ->active()
+            ->sum('remaining_balance');
+    }
+
+    public function getPendingPayments()
+    {
+        return $this->payments()
+            ->where('status', 'pending')
+            ->get();
+    }
+
+    public function getPaymentSummary(): array
+    {
+        return [
+            'total_paid' => (float)$this->payments()->completed()->sum('amount'),
+            'pending_amount' => (float)$this->payments()->pending()->sum('amount'),
+            'advance_credits' => $this->getAvanceCreditBalance(),
+            'total_bills' => (float)$this->bills()->sum('total_amount'),
+            'balance_due' => (float)$this->bills()->sum('total_amount') - $this->payments()->completed()->sum('amount'),
+        ];
+    }
+
+
 }

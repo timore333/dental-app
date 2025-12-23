@@ -3,52 +3,27 @@
 namespace App\Livewire\Dashboards;
 
 use App\Models\Appointment;
+use App\Models\Bill;
 use App\Models\InsuranceRequest;
 use App\Models\Patient;
+use App\Models\Payment;
 use App\Models\User;
+use App\Traits\hasDateRange;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
+#[Title('Admin Dashboard')]
 class AdminDashboard extends Component
 {
-    public string $dateRange = '30days';
-    public ?\DateTime $fromDate = null;
-    public ?\DateTime $toDate = null;
+  use hasDateRange;
 
     public function mount(): void
     {
-
-        $this->setDateRange('30days');
+        $this->setDateRange();
     }
 
-    /**
-     * Set the date range for metrics
-     */
-    public function setDateRange(string $range): void
-    {
-        $this->dateRange = $range;
-        $today = Carbon::now();
-
-        match($range) {
-            '7days' => [
-                $this->fromDate = $today->copy()->subDays(7)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-            '90days' => [
-                $this->fromDate = $today->copy()->subDays(90)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-            'yearly' => [
-                $this->fromDate = $today->copy()->startOfYear(),
-                $this->toDate = $today->endOfYear(),
-            ],
-            default => [
-                $this->fromDate = $today->copy()->subDays(30)->startOfDay(),
-                $this->toDate = $today->endOfDay(),
-            ],
-        };
-    }
 
     /**
      * Get dashboard metrics
@@ -57,33 +32,20 @@ class AdminDashboard extends Component
     {
         return [
             'total_patients' => Patient::count(),
-
-            'total_appointments' => Appointment::whereBetween('appointment_date', [$this->fromDate, $this->toDate])
+            'total_appointments' => Appointment::whereBetween('start', [$this->fromDate, $this->toDate])
                 ->count(),
-
-            'completed_appointments' => Appointment::whereBetween('appointment_date', [$this->fromDate, $this->toDate])
+            'completed_appointments' => Appointment::whereBetween('start', [$this->fromDate, $this->toDate])
                 ->where('status', 'completed')
                 ->count(),
-
-            // ✅ FIXED: Remove status filter - payments table doesn't have status column
-            'total_revenue' => DB::table('payments')
-                ->whereBetween('created_at', [$this->fromDate, $this->toDate])
+            'total_revenue' => Payment::whereBetween('created_at', [$this->fromDate, $this->toDate])
                 ->sum('amount') ?? 0,
-
             'pending_insurance' => InsuranceRequest::where('status', 'pending')
                 ->count(),
-
             'active_doctors' => User::doctor()
-                ->active()
                 ->count(),
-
-            'pending_approvals' => DB::table('insurance_requests')
-                ->where('status', 'pending')
+            'total_payments_count' => Payment::whereBetween('created_at', [$this->fromDate, $this->toDate])
                 ->count(),
-
-            'overdue_bills' => DB::table('accounts')
-                ->where('balance', '>', 0)
-                ->where('updated_at', '<', Carbon::now()->subDays(30))
+            'pending_approvals' => InsuranceRequest::where('status', 'pending')
                 ->count(),
         ];
     }
@@ -94,14 +56,13 @@ class AdminDashboard extends Component
     public function getChartData(): array
     {
         // Appointment Status Chart
-        $appointmentStatusData = Appointment::whereBetween('appointment_date', [$this->fromDate, $this->toDate])
+        $appointmentStatusData = Appointment::whereBetween('start', [$this->fromDate, $this->toDate])
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status');
 
-        // ✅ FIXED: Revenue by Payment Method Chart (removed status filter)
-        $revenueByType = DB::table('payments')
-            ->whereBetween('created_at', [$this->fromDate, $this->toDate])
+        // Revenue by Payment Method Chart
+        $revenueByType = Payment::whereBetween('created_at', [$this->fromDate, $this->toDate])
             ->selectRaw('payment_method, SUM(amount) as total')
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
@@ -124,6 +85,13 @@ class AdminDashboard extends Component
             ->orderBy('date')
             ->pluck('count', 'date');
 
+        // Daily Revenue Trend
+        $dailyRevenue = Payment::whereBetween('created_at', [$this->fromDate, $this->toDate])
+            ->selectRaw('DATE(created_at) as date, SUM(amount) as total')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('total', 'date');
+
         return [
             'appointmentStatus' => [
                 'labels' => array_keys($appointmentStatusData->toArray()),
@@ -141,7 +109,23 @@ class AdminDashboard extends Component
                 'labels' => array_keys($patientGrowth->toArray()),
                 'data' => array_values($patientGrowth->toArray()),
             ],
+            'dailyRevenue' => [
+                'labels' => array_keys($dailyRevenue->toArray()),
+                'data' => array_values($dailyRevenue->toArray()),
+            ],
         ];
+    }
+
+    /**
+     * Get recent payments
+     */
+    public function getRecentPayments()
+    {
+        return Payment::with(['bill.patient'])
+            ->whereBetween('created_at', [$this->fromDate, $this->toDate])
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
     }
 
     /**
@@ -152,6 +136,7 @@ class AdminDashboard extends Component
         return view('livewire.dashboards.admin-dashboard', [
             'metrics' => $this->getMetrics(),
             'chartData' => $this->getChartData(),
+            'recentPayments' => $this->getRecentPayments(),
         ]);
     }
 }

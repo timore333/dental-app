@@ -8,6 +8,7 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Visit;
+use App\Services\AppointmentService;
 use App\Services\VisitService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -30,7 +31,7 @@ class VisitRecording extends Component
         'patient' => 'required',
         'doctor' => 'required',
         'visitDate' => 'required|date|before_or_equal:now',
-        'chiefComplaint' => 'required|string|max:1000',
+        'chief_complaint' => 'required|string|max:1000',
         'diagnosis' => 'nullable|string|max:1000',
         'treatmentNotes' => 'nullable|string|max:1000',
         'selectedProcedures' => 'array|min:1',
@@ -169,11 +170,15 @@ class VisitRecording extends Component
 
             event(new VisitRecorded($visit));
 
+            // mark appointment as completed
+           $appointmentService =  new AppointmentService();
+           $appointmentService->markCompleted(Appointment::find($this->appointmentId));
+
             $this->dispatch('notify', type: 'success', message: __('Visit recorded and bill created'));
             redirect()->route('visits.show', ['id' => $visit->id]);
 
         } catch (\Exception $e) {
-            dump($e->getMessage());
+
             $this->addError('general', __('Error recording visit: ' . $e->getMessage()));
         }
     }

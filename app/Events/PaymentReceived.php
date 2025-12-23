@@ -1,20 +1,15 @@
 <?php
+
 namespace App\Events;
-use App\Models\Bill;
-use Illuminate\Foundation\Events\Dispatchable;
+
+use App\Models\Payment;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 class PaymentReceived
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $bill;
-    public $payment;
-
-    public function __construct(Bill $bill, $payment = null)
-    {
-        $this->bill = $bill;
-        $this->payment = $payment;
-    }
+    public function __construct(public Payment $payment) {}
 }

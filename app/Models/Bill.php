@@ -264,4 +264,45 @@ class Bill extends Model
             }
         });
     }
+
+    // Add these relationships and methods to your existing Bill model
+
+public function paymentAllocations(): HasMany
+{
+    return $this->hasMany(PaymentAllocation::class);
+}
+
+public function getAmountDue(): float
+{
+    return max(0, $this->total_amount - $this->paid_amount);
+}
+
+public function canApplyAdvanceCredit(): bool
+{
+    return !$this->isPaid() && $this->getAmountDue() > 0;
+}
+
+public function getPaymentHistory()
+{
+    return $this->payments()
+        ->with('allocations')
+        ->where('status', 'completed')
+        ->orderBy('payment_date', 'desc')
+        ->get();
+}
+
+public function applyAdvanceCredit(AdvanceCredit $credit, float $amount = null): void
+{
+    $amount = $amount ?? min($credit->getAvailableBalance(), $this->getAmountDue());
+
+    if ($amount <= 0 || $credit->isExpired()) {
+        return;
+    }
+
+    $credit->applyToPayment($amount);
+    $this->applyPayment($amount);
+}
+
+
+
 }

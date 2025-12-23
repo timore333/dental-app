@@ -79,7 +79,6 @@ class AppointmentService
     public function markCompleted(Appointment $appointment): Appointment
     {
         $appointment->update(['status' => 'completed']);
-        event(new \App\Events\AppointmentCompleted($appointment));
         return $appointment;
     }
 
